@@ -126,7 +126,6 @@ export default function Profile() {
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                 <Button 
-                  icon={ArrowLeftOutlined as any}
                   onClick={() => navigate('/dashboard')}
                 >
                   Dashboard
@@ -135,7 +134,6 @@ export default function Profile() {
               </div>
               <Button 
                 variant="primary" 
-                icon={SaveOutlined as any}
                 onClick={handleSave} 
                 loading={loading}
               >

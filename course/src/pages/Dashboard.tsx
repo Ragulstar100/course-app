@@ -62,7 +62,16 @@ export default function Dashboard() {
       if (serverOnline && user?.token) {
         // Fetch courses from server
         const coursesData = await api.getCourses();
-        setCourses(coursesData.filter(c => c.courseStatus === 'Active'));
+        const activeServerCourses = coursesData.filter(c => c.courseStatus === 'Active');
+        
+        // Always include DEFAULT_COURSES to ensure they show up in dev/production
+        const merged = [...activeServerCourses];
+        DEFAULT_COURSES.forEach(defCourse => {
+          if (!merged.some(c => c.id === defCourse.id)) {
+            merged.push(defCourse);
+          }
+        });
+        setCourses(merged);
 
         // Fetch enrollments from server
         const enrollmentData = await api.getStudentEnrollments(user.token);
@@ -74,7 +83,16 @@ export default function Dashboard() {
         if (!localCourses) {
           localStorage.setItem(MOCK_COURSE_DB_KEY, JSON.stringify(DEFAULT_COURSES));
         }
-        setCourses(parsedCourses.filter(c => c.courseStatus === 'Active'));
+        const activeLocalCourses = parsedCourses.filter(c => c.courseStatus === 'Active');
+        
+        // Always include DEFAULT_COURSES
+        const merged = [...activeLocalCourses];
+        DEFAULT_COURSES.forEach(defCourse => {
+          if (!merged.some(c => c.id === defCourse.id)) {
+            merged.push(defCourse);
+          }
+        });
+        setCourses(merged);
 
         // Fetch enrollments from mock local storage
         const localEnrollments = localStorage.getItem(MOCK_ENROLLMENT_DB_KEY);
