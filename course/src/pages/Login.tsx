@@ -13,29 +13,40 @@ export default function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [shop, setShop] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlShop = params.get('shop');
+    if (urlShop) return urlShop;
+    const storedShop = localStorage.getItem('course_shop_domain');
+    return storedShop || 'sample';
+  });
   const [loginAttempted, setLoginAttempted] = useState(false);
 
   // Autofill if coming from Register page
   useEffect(() => {
     dispatch(clearError());
     if (location.state) {
-      const state = location.state as { email?: string; password?: string };
+      const state = location.state as { email?: string; password?: string; shop?: string };
       if (state.email) setEmail(state.email);
       if (state.password) setPassword(state.password);
+      if (state.shop) setShop(state.shop);
     }
   }, [location.state, dispatch]);
 
   const handleSubmit = async () => {
     if (!email || !password) {
-      message.error('Please enter both email and password.');
+      message.error('Please enter email and password.');
       return;
     }
 
     setLoginAttempted(true);
-    const resultAction = await dispatch(loginUser({ email: email.trim(), password }));
+    const resultAction = await dispatch(loginUser({ email: email.trim(), password, shop: shop ? shop.trim() : undefined }));
 
     if (loginUser.fulfilled.match(resultAction)) {
       message.success('Login successful!');
+      if (resultAction.payload.shop) {
+        localStorage.setItem('course_shop_domain', resultAction.payload.shop);
+      }
       if (resultAction.payload.isAdmin) {
         navigate('/admin-dashboard');
       } else {

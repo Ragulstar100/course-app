@@ -1,13 +1,45 @@
 import type { StudentAuthResponse, Student } from '../types/auth.types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://course-api-veiu.onrender.com';
-const DEFAULT_SHOP = 'quickstart-shop.myshopify.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:1000';
+
+const getInitialShop = (): string => {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    const urlShop = params.get('shop');
+    if (urlShop) {
+      localStorage.setItem('course_shop_domain', urlShop);
+      return urlShop;
+    }
+    const storedUser = localStorage.getItem('auth_user');
+    if (storedUser) {
+      try {
+        const u = JSON.parse(storedUser);
+        if (u.shop) return u.shop;
+      } catch (e) {}
+    }
+    const storedShop = localStorage.getItem('course_shop_domain');
+    if (storedShop) return storedShop;
+  }
+  return 'sample';
+};
+
+const DEFAULT_SHOP = getInitialShop();
 
 // Helper to get headers
-const getHeaders = (token?: string | null) => {
+const getHeaders = (token?: string | null, customShop?: string | null) => {
+  let shop = customShop || DEFAULT_SHOP;
+  if (!customShop && token && token !== 'mock_admin_token') {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.shop) {
+        shop = payload.shop;
+      }
+    } catch (e) {}
+  }
+  
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    'X-Shop-Domain': DEFAULT_SHOP,
+    'X-Shop-Domain': shop,
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -36,7 +68,7 @@ export const api = {
   async register(studentName: string, email: string, password: string, shop: string = DEFAULT_SHOP): Promise<StudentAuthResponse> {
     const response = await fetch(`${API_BASE_URL}/student/register`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getHeaders(null, shop),
       body: JSON.stringify({ studentName, email, password, shop }),
     });
 
@@ -51,7 +83,7 @@ export const api = {
   async login(email: string, password: string, shop: string = DEFAULT_SHOP): Promise<StudentAuthResponse> {
     const response = await fetch(`${API_BASE_URL}/student/login`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getHeaders(null, shop),
       body: JSON.stringify({ email, password, shop }),
     });
 
@@ -69,18 +101,18 @@ export const api = {
       headers: getHeaders(token),
     });
 
+    const data = await response.json();
     if (!response.ok) {
-      const data = await response.json();
       throw new Error(data.details || data.error || 'Failed to fetch profile');
     }
-    return await response.json();
+    return data;
   },
 
   // Update student profile
   async updateProfile(token: string, studentName: string, email: string, phone?: string, course?: string, bio?: string, shop: string = DEFAULT_SHOP): Promise<Student> {
     const response = await fetch(`${API_BASE_URL}/student/student-profile`, {
       method: 'PUT',
-      headers: getHeaders(token),
+      headers: getHeaders(token, shop),
       body: JSON.stringify({ studentName, email, phone, course, bio, shop }),
     });
 
@@ -92,13 +124,14 @@ export const api = {
   },
 
   // GET all courses
-  async getCourses(shop: string = DEFAULT_SHOP): Promise<any[]> {
-    const response = await fetch(`${API_BASE_URL}/courses?shop=${shop}`, {
+  async getCourses(shop?: string): Promise<any[]> {
+    const url = shop ? `${API_BASE_URL}/courses?shop=${shop}` : `${API_BASE_URL}/courses`;
+    const response = await fetch(url, {
       method: 'GET',
-      headers: getHeaders(),
+      headers: getHeaders(null, shop),
     });
     if (!response.ok) {
-      throw new Error('Failed to retrieve courses');
+      throw new Error(`Failed to retrieve courses (Status: ${response.status})`);
     }
     return await response.json();
   },
@@ -151,7 +184,7 @@ export const api = {
       headers: getHeaders(token),
     });
     if (!response.ok) {
-      throw new Error('Failed to fetch enrollments');
+      throw new Error(`Failed to fetch enrollments (Status: ${response.status})`);
     }
     return await response.json();
   },
@@ -168,5 +201,17 @@ export const api = {
       throw new Error(data.details || data.error || 'Failed to enroll');
     }
     return data.enrollment;
+  },
+
+  // Get all students (for admin)
+  async getStudents(token: string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/student`, {
+      method: 'GET',
+      headers: getHeaders(token),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch students list');
+    }
+    return await response.json();
   }
 };

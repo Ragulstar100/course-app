@@ -32,11 +32,11 @@ export const checkServerStatus = createAsyncThunk(
 export const registerUser = createAsyncThunk(
   'auth/register',
   async (
-    payload: { studentName: string; email: string; password: string },
+    payload: { studentName: string; email: string; password: string; shop?: string },
     { rejectWithValue }
   ) => {
     try {
-      const student = await api.register(payload.studentName, payload.email, payload.password);
+      const student = await api.register(payload.studentName, payload.email, payload.password, payload.shop);
       return student;
     } catch (err: any) {
       return rejectWithValue(err.message || 'Registration failed');
@@ -48,7 +48,7 @@ export const registerUser = createAsyncThunk(
 export const loginUser = createAsyncThunk(
   'auth/login',
   async (
-    payload: { email: string; password: string },
+    payload: { email: string; password: string; shop?: string },
     { rejectWithValue }
   ) => {
     // Hardcoded Admin login check
@@ -59,7 +59,7 @@ export const loginUser = createAsyncThunk(
         email: 'test',
         studentStatus: 'Active',
         createdDate: new Date().toISOString(),
-        shop: 'quickstart-shop.myshopify.com',
+        shop: payload.shop || 'sample',
         token: 'mock_admin_token',
         isAdmin: true,
       };
@@ -67,7 +67,7 @@ export const loginUser = createAsyncThunk(
     }
 
     try {
-      const student = await api.login(payload.email, payload.password);
+      const student = await api.login(payload.email, payload.password, payload.shop);
       return student;
     } catch (err: any) {
       return rejectWithValue(err.message || 'Login failed');

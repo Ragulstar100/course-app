@@ -14,6 +14,13 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [shop] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlShop = params.get('shop');
+    if (urlShop) return urlShop;
+    const storedShop = localStorage.getItem('course_shop_domain');
+    return storedShop || 'sample';
+  });
 
   const handleSubmit = async () => {
     if (!name || !email || !password) {
@@ -29,7 +36,8 @@ export default function Register() {
     const resultAction = await dispatch(registerUser({ 
       studentName: name, 
       email: email.trim(), 
-      password 
+      password,
+      shop: shop ? shop.trim() : undefined
     }));
 
     if (registerUser.rejected.match(resultAction)) {
@@ -37,16 +45,19 @@ export default function Register() {
       if (errMsg === 'EMAIL_ALREADY_EXISTS' || (errMsg && errMsg.includes('already registered'))) {
         message.warning('Email is already registered. Redirecting you to login page...');
         setTimeout(() => {
-          navigate('/login', { state: { email: email.trim() } });
+          navigate('/login', { state: { email: email.trim(), shop: shop ? shop.trim() : undefined } });
         }, 1500);
       } else {
         message.error(errMsg || 'Registration failed');
       }
     } else {
       message.success('Student registered successfully!');
+      if (resultAction.payload && (resultAction.payload as any).shop) {
+        localStorage.setItem('course_shop_domain', (resultAction.payload as any).shop);
+      }
       setTimeout(() => {
-        // Go to login page, passing the email and password so it can autofill
-        navigate('/login', { state: { email: email.trim(), password } });
+        // Go to login page, passing the email, password, and shop so it can autofill
+        navigate('/login', { state: { email: email.trim(), password, shop: shop ? shop.trim() : undefined } });
       }, 1500);
     }
   };

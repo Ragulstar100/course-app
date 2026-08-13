@@ -1,48 +1,60 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Layout, Card } from '@shopify/polaris';
-import { Table, Button as AntButton, Modal, Form, Input, Select, Tag, Popconfirm, Avatar, Dropdown, message, Badge, Space } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Layout, Card, Grid } from '@shopify/polaris';
+import { Table, Tag, Avatar, Dropdown, message, Badge, Space } from 'antd';
+import { UserOutlined, LogoutOutlined, TeamOutlined, CheckCircleOutlined, ShopOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/authSlice';
 import { api } from '../services/api';
 
-interface Course {
+interface Student {
   id: string;
-  courseTitle: string;
-  description: string;
-  instructorName: string;
-  category: string;
-  duration: string;
-  courseStatus: 'Active' | 'Inactive';
+  studentName: string;
+  email: string;
+  studentStatus: 'Active' | 'Inactive';
   createdDate: string;
+  shopifyCustomerId?: string | null;
   shop: string;
+  phone?: string;
+  course?: string;
+  bio?: string;
 }
 
-const MOCK_COURSE_DB_KEY = 'mock_course_db';
+const MOCK_STUDENT_DB_KEY = 'mock_student_db';
 
-const DEFAULT_COURSES: Course[] = [
+const DEFAULT_STUDENTS: Student[] = [
   {
-    id: 'course-1',
-    courseTitle: 'Introduction to React & Redux',
-    description: 'Learn the core concepts of React components, state, hooks, and Redux Toolkit slices.',
-    instructorName: 'Ragul Son',
-    category: 'Development',
-    duration: '8 hours',
-    courseStatus: 'Active',
-    createdDate: new Date().toISOString(),
+    id: 'student-1',
+    studentName: 'Ragul Star',
+    email: 'ragulstar100@gmail.com',
+    studentStatus: 'Active',
+    phone: '+91 98765 43210',
+    course: 'Development',
+    bio: 'Passionate learner focused on building high-performance Shopify apps with Vite, React, Polaris, and Node.js.',
+    createdDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     shop: 'quickstart-shop.myshopify.com'
   },
   {
-    id: 'course-2',
-    courseTitle: 'Shopify App Development',
-    description: 'Master Shopify App Bridge, Polaris UI, SQLite integrations, and webhooks.',
-    instructorName: 'Jane Doe',
-    category: 'Development',
-    duration: '14 hours',
-    courseStatus: 'Active',
-    createdDate: new Date().toISOString(),
+    id: 'student-2',
+    studentName: 'Alice Johnson',
+    email: 'alice.j@example.com',
+    studentStatus: 'Active',
+    phone: '+1 555-0143',
+    course: 'Design',
+    bio: 'UI/UX specialist diving deep into typography, interactive mockups, and modular component design systems.',
+    createdDate: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
     shop: 'quickstart-shop.myshopify.com'
+  },
+  {
+    id: 'student-3',
+    studentName: 'Michael Brown',
+    email: 'michael.brown@example.com',
+    studentStatus: 'Inactive',
+    phone: 'Not provided',
+    course: 'Marketing',
+    bio: 'Growth hacker analyzing search optimization methodologies, keyword tracking, and conversions auditing.',
+    createdDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
+    shop: 'partner-development-shop.myshopify.com'
   }
 ];
 
@@ -51,52 +63,41 @@ export default function AdminDashboard() {
   const dispatch = useAppDispatch();
   const { user, serverOnline } = useAppSelector((state) => state.auth);
 
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
-  
-  // Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-  
-  const [form] = Form.useForm();
 
-  // Load courses
-  const loadCourses = async () => {
+  // Load students
+  const loadStudents = async () => {
     setLoading(true);
-    if (serverOnline) {
+    if (serverOnline && user?.token) {
       try {
-        const data = await api.getCourses();
-        setCourses(data);
+        const data = await api.getStudents(user.token);
+        setStudents(data);
       } catch (err) {
-        message.error('Failed to load courses from backend. Falling back to local db.');
-        loadLocalCourses();
+        message.error('Failed to load students from backend. Falling back to local db.');
+        loadLocalStudents();
       } finally {
         setLoading(false);
       }
     } else {
-      loadLocalCourses();
+      loadLocalStudents();
       setLoading(false);
     }
   };
 
-  const loadLocalCourses = () => {
-    const localDb = localStorage.getItem(MOCK_COURSE_DB_KEY);
+  const loadLocalStudents = () => {
+    const localDb = localStorage.getItem(MOCK_STUDENT_DB_KEY);
     if (localDb) {
-      setCourses(JSON.parse(localDb));
+      setStudents(JSON.parse(localDb));
     } else {
-      localStorage.setItem(MOCK_COURSE_DB_KEY, JSON.stringify(DEFAULT_COURSES));
-      setCourses(DEFAULT_COURSES);
+      localStorage.setItem(MOCK_STUDENT_DB_KEY, JSON.stringify(DEFAULT_STUDENTS));
+      setStudents(DEFAULT_STUDENTS);
     }
   };
 
-  const saveLocalCourses = (updated: Course[]) => {
-    localStorage.setItem(MOCK_COURSE_DB_KEY, JSON.stringify(updated));
-    setCourses(updated);
-  };
-
   useEffect(() => {
-    loadCourses();
-  }, [serverOnline]);
+    loadStudents();
+  }, [serverOnline, user]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -104,182 +105,73 @@ export default function AdminDashboard() {
     navigate('/');
   };
 
-  // Open modal for Adding
-  const handleAddClick = () => {
-    setEditingCourse(null);
-    form.resetFields();
-    setIsModalOpen(true);
-  };
-
-  // Open modal for Editing
-  const handleEditClick = (course: Course) => {
-    setEditingCourse(course);
-    form.setFieldsValue({
-      courseTitle: course.courseTitle,
-      description: course.description,
-      instructorName: course.instructorName,
-      category: course.category,
-      duration: course.duration,
-      courseStatus: course.courseStatus,
-    });
-    setIsModalOpen(true);
-  };
-
-  // Delete course
-  const handleDelete = async (id: string) => {
-    setLoading(true);
-    if (serverOnline) {
-      try {
-        await api.deleteCourse(id, user?.token);
-        message.success('Course deleted successfully from backend.');
-        loadCourses();
-      } catch (err: any) {
-        message.error(err.message || 'Failed to delete course');
-        setLoading(false);
-      }
-    } else {
-      const localDb = localStorage.getItem(MOCK_COURSE_DB_KEY);
-      const parsed: Course[] = localDb ? JSON.parse(localDb) : [];
-      const updated = parsed.filter(c => c.id !== id);
-      saveLocalCourses(updated);
-      message.success('Course deleted successfully (Offline Mock Mode).');
-      setLoading(false);
-    }
-  };
-
-  // Submit form (Add or Update)
-  const handleFormSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      setLoading(true);
-      
-      const coursePayload = {
-        courseTitle: values.courseTitle,
-        description: values.description,
-        instructorName: values.instructorName,
-        category: values.category,
-        duration: values.duration,
-        courseStatus: values.courseStatus,
-      };
-
-      if (editingCourse) {
-        // Update
-        if (serverOnline) {
-          try {
-            await api.updateCourse(editingCourse.id, coursePayload, user?.token);
-            message.success('Course updated successfully on backend.');
-            setIsModalOpen(false);
-            loadCourses();
-          } catch (err: any) {
-            message.error(err.message || 'Failed to update course');
-          }
-        } else {
-          const localDb = localStorage.getItem(MOCK_COURSE_DB_KEY);
-          const parsed: Course[] = localDb ? JSON.parse(localDb) : [];
-          const updated = parsed.map(c => 
-            c.id === editingCourse.id 
-              ? { ...c, ...coursePayload } 
-              : c
-          );
-          saveLocalCourses(updated);
-          message.success('Course updated successfully (Offline Mock Mode).');
-          setIsModalOpen(false);
-        }
-      } else {
-        // Create
-        if (serverOnline) {
-          try {
-            await api.createCourse(coursePayload, user?.token);
-            message.success('Course created successfully on backend.');
-            setIsModalOpen(false);
-            loadCourses();
-          } catch (err: any) {
-            message.error(err.message || 'Failed to create course');
-          }
-        } else {
-          const localDb = localStorage.getItem(MOCK_COURSE_DB_KEY);
-          const parsed: Course[] = localDb ? JSON.parse(localDb) : [];
-          const newCourse: Course = {
-            id: crypto.randomUUID(),
-            ...coursePayload,
-            createdDate: new Date().toISOString(),
-            shop: 'quickstart-shop.myshopify.com'
-          };
-          parsed.push(newCourse);
-          saveLocalCourses(parsed);
-          message.success('Course created successfully (Offline Mock Mode).');
-          setIsModalOpen(false);
-        }
-      }
-    } catch (error) {
-      // Form validation failed
-      console.warn('Form validation failed:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Ant Design Table Columns definition
+  // Ant Design Table Columns for Students
   const columns = [
     {
-      title: 'Course Title',
-      dataIndex: 'courseTitle',
-      key: 'courseTitle',
-      render: (text: string) => <strong className="text-slate-800">{text}</strong>,
+      title: 'Student Name',
+      dataIndex: 'studentName',
+      key: 'studentName',
+      render: (text: string) => (
+        <Space size="middle">
+          <Avatar 
+            style={{ backgroundColor: '#4f46e5', verticalAlign: 'middle' }}
+            icon={<UserOutlined />}
+          />
+          <strong className="text-slate-800 font-semibold">{text}</strong>
+        </Space>
+      ),
     },
     {
-      title: 'Instructor',
-      dataIndex: 'instructorName',
-      key: 'instructorName',
+      title: 'Email Address',
+      dataIndex: 'email',
+      key: 'email',
+      render: (email: string) => <span className="text-slate-600 font-mono text-xs">{email}</span>,
     },
     {
-      title: 'Category',
-      dataIndex: 'category',
-      key: 'category',
-      render: (text: string) => <Tag color="blue">{text}</Tag>,
+      title: 'Target Major / Course',
+      dataIndex: 'course',
+      key: 'course',
+      render: (course: string) => course ? <Tag color="blue">{course}</Tag> : <span className="text-slate-400 italic text-xs">Not declared</span>,
     },
     {
-      title: 'Duration',
-      dataIndex: 'duration',
-      key: 'duration',
+      title: 'Phone Number',
+      dataIndex: 'phone',
+      key: 'phone',
+      render: (phone: string) => <span className="text-slate-600">{phone || 'Not provided'}</span>,
+    },
+    {
+      title: 'Shopify Store',
+      dataIndex: 'shop',
+      key: 'shop',
+      render: (shop: string) => (
+        <Space size="small">
+          <ShopOutlined className="text-slate-400" />
+          <span className="text-xs text-slate-500 font-mono">{shop}</span>
+        </Space>
+      ),
     },
     {
       title: 'Status',
-      dataIndex: 'courseStatus',
-      key: 'courseStatus',
+      dataIndex: 'studentStatus',
+      key: 'studentStatus',
       render: (status: string) => (
         <Badge 
           status={status === 'Active' ? 'success' : 'default'} 
-          text={status} 
+          text={<span className="text-xs">{status}</span>} 
         />
       ),
     },
     {
-      title: 'Actions',
-      key: 'actions',
-      width: 150,
-      render: (_: any, record: Course) => (
-        <Space size="middle">
-          <AntButton 
-            type="text" 
-            icon={<EditOutlined className="text-blue-600" />} 
-            onClick={() => handleEditClick(record)}
-          />
-          <Popconfirm
-            title="Delete Course"
-            description="Are you sure you want to delete this course?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <AntButton 
-              type="text" 
-              danger 
-              icon={<DeleteOutlined />} 
-            />
-          </Popconfirm>
-        </Space>
-      ),
+      title: 'Joined Date',
+      dataIndex: 'createdDate',
+      key: 'createdDate',
+      render: (dateStr: string) => {
+        try {
+          return <span className="text-xs text-slate-500">{new Date(dateStr).toLocaleDateString()}</span>;
+        } catch {
+          return <span className="text-xs text-slate-500">N/A</span>;
+        }
+      },
     },
   ];
 
@@ -292,6 +184,11 @@ export default function AdminDashboard() {
       onClick: handleLogout,
     },
   ];
+
+  // Metrics Calculations
+  const totalStudents = students.length;
+  const activeStudentsCount = students.filter(s => s.studentStatus === 'Active').length;
+  const linkedShopifyCount = students.filter(s => s.shopifyCustomerId || s.shop).length;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -329,127 +226,88 @@ export default function AdminDashboard() {
       {/* Main Admin Section */}
       <main className="flex-1 max-w-6xl mx-auto w-full py-10 px-6">
         <Layout>
-          {/* Header Action Card */}
+          {/* Header Action Title */}
           <Layout.Section>
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Course Directory</h2>
-                <p className="text-sm text-slate-500 mt-1">Manage, update, and publish academy course modules.</p>
-              </div>
-              <AntButton 
-                type="primary" 
-                size="large" 
-                icon={<PlusOutlined />} 
-                onClick={handleAddClick}
-                className="bg-indigo-600 hover:bg-indigo-700"
-              >
-                Add Course
-              </AntButton>
+            <div className="mb-6">
+              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Student Directory</h2>
+              <p className="text-sm text-slate-500 mt-1">Review student profiles, system registration details, and target course modules.</p>
             </div>
           </Layout.Section>
 
-          {/* Courses Table Card */}
+          {/* Quick Metrics Grid */}
+          <Layout.Section>
+            <Grid>
+              <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 4 }}>
+                <Card>
+                  <div className="p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 text-xl border border-indigo-100">
+                      <TeamOutlined />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Total Registered</p>
+                      <h4 className="text-2xl font-bold text-slate-800 mt-1">{totalStudents} Students</h4>
+                    </div>
+                  </div>
+                </Card>
+              </Grid.Cell>
+
+              <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 4 }}>
+                <Card>
+                  <div className="p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 text-xl border border-emerald-100">
+                      <CheckCircleOutlined />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Active Status</p>
+                      <h4 className="text-2xl font-bold text-slate-800 mt-1">{activeStudentsCount} Active</h4>
+                    </div>
+                  </div>
+                </Card>
+              </Grid.Cell>
+
+              <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 4 }}>
+                <Card>
+                  <div className="p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 text-xl border border-amber-100">
+                      <ShopOutlined />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Linked to Shopify</p>
+                      <h4 className="text-2xl font-bold text-slate-800 mt-1">{linkedShopifyCount} Shops</h4>
+                    </div>
+                  </div>
+                </Card>
+              </Grid.Cell>
+            </Grid>
+          </Layout.Section>
+
+          {/* Students Directory Table Card */}
           <Layout.Section>
             <Card>
               <div className="p-2">
                 <Table 
                   columns={columns} 
-                  dataSource={courses} 
+                  dataSource={students} 
                   rowKey="id" 
                   loading={loading}
                   pagination={{ pageSize: 8 }}
+                  expandable={{
+                    expandedRowRender: (record) => (
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg">
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Student Biography</p>
+                        <p className="text-sm text-slate-600 italic">
+                          "{record.bio || 'This student has not updated their biography yet.'}"
+                        </p>
+                      </div>
+                    ),
+                    rowExpandable: () => true,
+                  }}
                 />
               </div>
             </Card>
           </Layout.Section>
         </Layout>
       </main>
-
-      {/* Course Entry/Edit Modal */}
-      <Modal
-        title={editingCourse ? "Edit Course Module" : "Create New Course"}
-        open={isModalOpen}
-        onOk={handleFormSubmit}
-        onCancel={() => setIsModalOpen(false)}
-        confirmLoading={loading}
-        okText={editingCourse ? "Save Changes" : "Create Course"}
-        cancelText="Cancel"
-        destroyOnClose
-      >
-        <Form 
-          form={form} 
-          layout="vertical" 
-          name="courseForm"
-          className="mt-4"
-        >
-          <Form.Item
-            name="courseTitle"
-            label="Course Title"
-            rules={[
-              { required: true, message: 'Please input the course title.' },
-              { min: 3, message: 'Course title must be at least 3 characters long.' }
-            ]}
-          >
-            <Input placeholder="Introduction to Python Programming" />
-          </Form.Item>
-
-          <Form.Item
-            name="description"
-            label="Description"
-            rules={[
-              { required: true, message: 'Please input the course description.' },
-              { min: 5, message: 'Description must be at least 5 characters long.' }
-            ]}
-          >
-            <Input.TextArea rows={3} placeholder="Provide a summary of the course modules, syllabus, and targets..." />
-          </Form.Item>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              name="instructorName"
-              label="Instructor Name"
-              rules={[{ required: true, message: 'Please input the instructor name.' }]}
-            >
-              <Input placeholder="Jane Doe" />
-            </Form.Item>
-
-            <Form.Item
-              name="category"
-              label="Category"
-              rules={[{ required: true, message: 'Please select a category.' }]}
-            >
-              <Select placeholder="Select Category">
-                <Select.Option value="Development">Development</Select.Option>
-                <Select.Option value="Design">Design</Select.Option>
-                <Select.Option value="Marketing">Marketing</Select.Option>
-                <Select.Option value="Business">Business</Select.Option>
-              </Select>
-            </Form.Item>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item
-              name="duration"
-              label="Duration"
-              rules={[{ required: true, message: 'Please input the course duration.' }]}
-            >
-              <Input placeholder="e.g. 10 hours, 3 weeks" />
-            </Form.Item>
-
-            <Form.Item
-              name="courseStatus"
-              label="Course Status"
-              initialValue="Active"
-              rules={[{ required: true, message: 'Please select a status.' }]}
-            >
-              <Select>
-                <Select.Option value="Active">Active</Select.Option>
-                <Select.Option value="Inactive">Inactive</Select.Option>
-              </Select>
-            </Form.Item>
-          </div>
-        </Form>
-      </Modal>
 
       <footer className="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400 mt-12">
         © {new Date().getFullYear()} Course Academy. Admin Console.

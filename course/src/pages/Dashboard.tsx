@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Card, Button, Text, Grid } from '@shopify/polaris';
 import { Avatar, Dropdown, message, Tag } from 'antd';
-import { UserOutlined, LogoutOutlined, BookOutlined, CalendarOutlined, TrophyOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, BookOutlined, CalendarOutlined, TrophyOutlined, CompassOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/authSlice';
 import { api } from '../services/api';
@@ -18,31 +18,6 @@ interface Course {
   createdDate: string;
   shop: string;
 }
-
-const DEFAULT_COURSES: Course[] = [
-  {
-    id: 'course-1',
-    courseTitle: 'Introduction to React & Redux',
-    description: 'Learn the core concepts of React components, state, hooks, and Redux Toolkit slices.',
-    instructorName: 'Ragul Son',
-    category: 'Development',
-    duration: '8 hours',
-    courseStatus: 'Active',
-    createdDate: new Date().toISOString(),
-    shop: 'quickstart-shop.myshopify.com'
-  },
-  {
-    id: 'course-2',
-    courseTitle: 'Shopify App Development',
-    description: 'Master Shopify App Bridge, Polaris UI, SQLite integrations, and webhooks.',
-    instructorName: 'Jane Doe',
-    category: 'Development',
-    duration: '14 hours',
-    courseStatus: 'Active',
-    createdDate: new Date().toISOString(),
-    shop: 'quickstart-shop.myshopify.com'
-  }
-];
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -61,21 +36,20 @@ export default function Dashboard() {
       const coursesData = await api.getCourses();
       const activeServerCourses = coursesData.filter(c => c.courseStatus === 'Active');
       
-      // Always include DEFAULT_COURSES to ensure they show up in dev/production
-      const merged = [...activeServerCourses];
-      DEFAULT_COURSES.forEach(defCourse => {
-        if (!merged.some(c => c.id === defCourse.id)) {
-          merged.push(defCourse);
-        }
-      });
-      setCourses(merged);
+      setCourses(activeServerCourses);
 
       // Fetch enrollments from server
       const enrollmentData = await api.getStudentEnrollments(user.token);
       setEnrolledCourseIds(enrollmentData.map((e: any) => e.courseId));
     } catch (err: any) {
       console.error('Error loading student dashboard data:', err);
-      message.error('Failed to load courses or enrollment data from server.');
+      if (err.message && (err.message.includes('403') || err.message.includes('401'))) {
+        message.error('Session expired or student account not found. Logging out...');
+        dispatch(logout());
+        navigate('/login');
+      } else {
+        message.error('Failed to load courses or enrollment data from server.');
+      }
     } finally {
       setLoading(false);
     }
@@ -98,6 +72,10 @@ export default function Dashboard() {
     } catch (err: any) {
       message.error(err.message || 'Purchase failed.');
     }
+  };
+
+  const handleStartLearning = (title: string) => {
+    message.info(`Welcome to "${title}"! Setting up your interactive class workstation...`);
   };
 
   const handleLogout = () => {
@@ -131,7 +109,6 @@ export default function Dashboard() {
     }
   };
 
-  // Fallback initials for Avatar
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -146,6 +123,10 @@ export default function Dashboard() {
       catalogElement.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Filter courses
+  const enrolledCourses = courses.filter((c) => enrolledCourseIds.includes(c.id));
+  const purchaseableCourses = courses.filter((c) => !enrolledCourseIds.includes(c.id));
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -187,12 +168,12 @@ export default function Dashboard() {
               <p className="text-slate-500 max-w-2xl text-sm leading-relaxed mb-4">
                 Track your course assignments, explore new modules, and update your personal student profile.
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-3 font-sans">
                 <Button onClick={() => navigate('/profile')}>
                   Edit Profile
                 </Button>
                 <Button variant="primary" onClick={scrollToCatalog}>
-                  Enroll in Courses
+                  Explore Catalog
                 </Button>
                 <Button onClick={() => navigate('/')}>
                   Go to Welcome Page
@@ -207,12 +188,12 @@ export default function Dashboard() {
               <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 3 }}>
                 <Card>
                   <div className="p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 text-xl border border-slate-100">
+                    <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 text-xl border border-indigo-100">
                       <BookOutlined />
                     </div>
                     <div>
-                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Purchased Courses</p>
-                      <h4 className="text-2xl font-bold text-slate-800 mt-1">{enrolledCourseIds.length}</h4>
+                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Enrolled Courses</p>
+                      <h4 className="text-2xl font-bold text-slate-800 mt-1">{enrolledCourses.length}</h4>
                     </div>
                   </div>
                 </Card>
@@ -221,12 +202,12 @@ export default function Dashboard() {
               <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 3 }}>
                 <Card>
                   <div className="p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 text-xl border border-slate-100">
-                      <BookOutlined />
+                    <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 text-xl border border-amber-100">
+                      <CompassOutlined />
                     </div>
                     <div>
-                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Enrolled Courses</p>
-                      <h4 className="text-2xl font-bold text-slate-800 mt-1">{user?.course ? 1 : 0} Active</h4>
+                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Available to Buy</p>
+                      <h4 className="text-2xl font-bold text-slate-800 mt-1">{purchaseableCourses.length}</h4>
                     </div>
                   </div>
                 </Card>
@@ -269,7 +250,7 @@ export default function Dashboard() {
             <Card>
               <div className="p-6">
                 <Text as="h3" variant="headingMd">Student Details</Text>
-                <div className="mt-4 space-y-3">
+                <div className="mt-4 space-y-3 font-sans">
                   <div>
                     <span className="text-xs text-slate-400 uppercase font-semibold">Registered Email</span>
                     <p className="text-sm text-slate-700 mt-0.5">{user?.email}</p>
@@ -299,47 +280,87 @@ export default function Dashboard() {
             </Card>
           </Layout.Section>
 
-          {/* Courses Directory / Available Courses */}
+          {/* ENROLLED COURSES SECTION */}
+          <Layout.Section>
+            <Card>
+              <div className="p-6">
+                <Text as="h3" variant="headingMd">Enrolled Courses</Text>
+                <p className="text-xs text-slate-400 mt-1 mb-4">Access details and curriculum workspaces for your active courses.</p>
+                
+                {loading ? (
+                  <div className="text-center py-6 text-slate-400">Loading courses...</div>
+                ) : enrolledCourses.length === 0 ? (
+                  <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+                    <p className="text-sm text-slate-400 font-medium">You are not enrolled in any courses yet.</p>
+                    <p className="text-xs text-slate-400 mt-1">Explore our catalog below to enroll and start learning!</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                    {enrolledCourses.map((course) => (
+                      <div key={course.id} className="border border-indigo-100 rounded-xl p-5 flex flex-col justify-between hover:shadow-md transition bg-gradient-to-br from-white to-slate-50">
+                        <div>
+                          <div className="flex justify-between items-start gap-2 mb-2">
+                            <h4 className="font-bold text-slate-800 text-base">{course.courseTitle}</h4>
+                            <Tag color="success">Enrolled</Tag>
+                          </div>
+                          <p className="text-xs text-slate-500 mb-4 leading-relaxed">{course.description}</p>
+                        </div>
+                        <div className="flex justify-between items-center pt-3 border-t border-indigo-50 mt-auto">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs text-slate-400">Instructor: <strong>{course.instructorName}</strong></span>
+                            <span className="text-xs text-slate-400">Duration: <strong>{course.duration}</strong></span>
+                            <span className="text-xs text-slate-400">Merchant: <strong>{course.shop}</strong></span>
+                          </div>
+                          <Button variant="primary" icon={<PlayCircleOutlined />} onClick={() => handleStartLearning(course.courseTitle)}>
+                            Start Learning
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+          </Layout.Section>
+
+          {/* AVAILABLE COURSES CATALOG */}
           <Layout.Section>
             <div id="courses-catalog">
               <Card>
                 <div className="p-6">
-                  <Text as="h3" variant="headingMd">Available Courses Catalog</Text>
-                  <p className="text-xs text-slate-400 mt-1 mb-4">Click "Purchase" on any course below to instantly purchase it.</p>
+                  <Text as="h3" variant="headingMd">Courses Available for Purchase</Text>
+                  <p className="text-xs text-slate-400 mt-1 mb-4">Click "Purchase" on any course below to instantly register and get immediate access.</p>
                   
                   {loading ? (
                     <div className="text-center py-6 text-slate-400">Loading courses...</div>
-                  ) : courses.length === 0 ? (
-                    <div className="text-center py-6 text-slate-400">No active courses available at this moment.</div>
+                  ) : purchaseableCourses.length === 0 ? (
+                    <div className="text-center py-10 border border-slate-200 rounded-xl bg-slate-50">
+                      <p className="text-sm text-slate-400 font-medium">You have purchased all available courses!</p>
+                      <p className="text-xs text-slate-400 mt-1">Check back later for new modules and content.</p>
+                    </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                      {courses.map((course) => {
-                        const isPurchased = enrolledCourseIds.includes(course.id);
-                        return (
-                          <div key={course.id} className="border border-slate-200 rounded-xl p-5 flex flex-col justify-between hover:shadow-sm transition bg-white">
-                            <div>
-                              <div className="flex justify-between items-start gap-2 mb-2">
-                                <h4 className="font-bold text-slate-800 text-base">{course.courseTitle}</h4>
-                                <Tag color="blue">{course.category}</Tag>
-                              </div>
-                              <p className="text-xs text-slate-500 mb-4 leading-relaxed">{course.description}</p>
+                      {purchaseableCourses.map((course) => (
+                        <div key={course.id} className="border border-slate-200 rounded-xl p-5 flex flex-col justify-between hover:shadow-sm transition bg-white">
+                          <div>
+                            <div className="flex justify-between items-start gap-2 mb-2">
+                              <h4 className="font-bold text-slate-800 text-base">{course.courseTitle}</h4>
+                              <Tag color="blue">{course.category}</Tag>
                             </div>
-                            <div className="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-xs text-slate-400">Instructor: <strong>{course.instructorName}</strong></span>
-                                <span className="text-xs text-slate-400">Duration: <strong>{course.duration}</strong></span>
-                              </div>
-                              {isPurchased ? (
-                                <Tag color="success" className="px-3 py-1 font-semibold text-xs rounded-lg m-0 animate-pulse">Purchased</Tag>
-                              ) : (
-                                <Button variant="primary" onClick={() => handlePurchase(course.id)}>
-                                  Purchase
-                                </Button>
-                              )}
-                            </div>
+                            <p className="text-xs text-slate-500 mb-4 leading-relaxed">{course.description}</p>
                           </div>
-                        );
-                      })}
+                          <div className="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-xs text-slate-400">Instructor: <strong>{course.instructorName}</strong></span>
+                              <span className="text-xs text-slate-400">Duration: <strong>{course.duration}</strong></span>
+                              <span className="text-xs text-slate-400">Merchant: <strong>{course.shop}</strong></span>
+                            </div>
+                            <Button variant="primary" onClick={() => handlePurchase(course.id)}>
+                              Purchase
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
