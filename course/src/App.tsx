@@ -4,6 +4,7 @@ import { AppProvider } from '@shopify/polaris';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import { store } from './store/store';
 import PrivateRoute from './components/PrivateRoute';
+import AdminRoute from './components/AdminRoute';
 
 // Pages
 import Welcome from './pages/Welcome';
@@ -11,6 +12,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import AdminDashboard from './pages/AdminDashboard';
 
 export default function App() {
   return (
@@ -38,6 +40,16 @@ export default function App() {
                 <PrivateRoute>
                   <Profile />
                 </PrivateRoute>
+              }
+            />
+
+            {/* Authenticated Admin Routes */}
+            <Route
+              path="/admin-dashboard"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
               }
             />
           </Routes>

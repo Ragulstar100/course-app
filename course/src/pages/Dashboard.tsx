@@ -84,7 +84,6 @@ export default function Dashboard() {
       <main className="flex-1 max-w-6xl mx-auto w-full py-10 px-6">
         <Layout>
           {/* Welcome Banner */}
-          <Layout.Section>
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white shadow-md mb-6">
               <h2 className="text-3xl font-extrabold mb-2">Welcome Back, {user?.studentName}!</h2>
               <p className="text-blue-100 max-w-2xl text-sm leading-relaxed mb-4">
@@ -94,6 +93,9 @@ export default function Dashboard() {
                 <Button onClick={() => navigate('/profile')}>
                   Edit Profile
                 </Button>
+                <Button onClick={() => navigate('/')}>
+                  Go to Welcome Page
+                </Button>
               </div>
             </div>
           </Layout.Section>
@@ -101,10 +103,24 @@ export default function Dashboard() {
           {/* Quick Metrics */}
           <Layout.Section>
             <Grid>
-              <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 4 }}>
+              <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 3 }}>
                 <Card>
                   <div className="p-5 flex items-center gap-4">
                     <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 text-xl border border-blue-100">
+                      <BookOutlined />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Purchased Courses</p>
+                      <h4 className="text-2xl font-bold text-slate-800 mt-1">0</h4>
+                    </div>
+                  </div>
+                </Card>
+              </Grid.Cell>
+
+              <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 3 }}>
+                <Card>
+                  <div className="p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 text-xl border border-indigo-100">
                       <BookOutlined />
                     </div>
                     <div>
@@ -115,7 +131,7 @@ export default function Dashboard() {
                 </Card>
               </Grid.Cell>
 
-              <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 4 }}>
+              <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 3 }}>
                 <Card>
                   <div className="p-5 flex items-center gap-4">
                     <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 text-xl border border-emerald-100">
@@ -129,7 +145,7 @@ export default function Dashboard() {
                 </Card>
               </Grid.Cell>
 
-              <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 4, lg: 4 }}>
+              <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 3, lg: 3 }}>
                 <Card>
                   <div className="p-5 flex items-center gap-4">
                     <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 text-xl border border-purple-100">

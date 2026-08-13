@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Layout, Card, Button, Text } from '@shopify/polaris';
 import { Alert, message, Badge, Space, Switch } from 'antd';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { checkServerStatus, setSimulatedServerStatus } from '../store/authSlice';
+import { checkServerStatus, setSimulatedServerStatus, logout } from '../store/authSlice';
 
 export default function Welcome() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { serverOnline, checkingServer } = useAppSelector((state) => state.auth);
+  const { user, serverOnline, checkingServer } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     // Check backend server status
@@ -37,6 +37,11 @@ export default function Welcome() {
     } else {
       message.error('Simulating: Server is Offline');
     }
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    message.success('Logged out successfully.');
   };
 
   return (
@@ -90,12 +95,31 @@ export default function Welcome() {
               )}
 
               <div className="flex gap-4 justify-center">
-                <Button variant="primary" size="large" onClick={() => navigate('/register')}>
-                  Register Now
-                </Button>
-                <Button size="large" onClick={() => navigate('/login')}>
-                  Student Login
-                </Button>
+                {user ? (
+                  <>
+                    {user.isAdmin ? (
+                      <Button variant="primary" size="large" onClick={() => navigate('/admin-dashboard')}>
+                        Go to Admin Dashboard
+                      </Button>
+                    ) : (
+                      <Button variant="primary" size="large" onClick={() => navigate('/dashboard')}>
+                        Go to Student Dashboard
+                      </Button>
+                    )}
+                    <Button size="large" onClick={handleLogout}>
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="primary" size="large" onClick={() => navigate('/register')}>
+                      Register Now
+                    </Button>
+                    <Button size="large" onClick={() => navigate('/login')}>
+                      Student Login
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </Layout.Section>

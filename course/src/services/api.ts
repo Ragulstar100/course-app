@@ -7,6 +7,7 @@ const DEFAULT_SHOP = 'quickstart-shop.myshopify.com';
 const getHeaders = (token?: string | null) => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'X-Shop-Domain': DEFAULT_SHOP,
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -88,5 +89,58 @@ export const api = {
       throw new Error(data.details || data.error || 'Failed to update profile');
     }
     return data.student;
+  },
+
+  // GET all courses
+  async getCourses(shop: string = DEFAULT_SHOP): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/courses?shop=${shop}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to retrieve courses');
+    }
+    return await response.json();
+  },
+
+  // CREATE course
+  async createCourse(courseData: { courseTitle: string; description: string; instructorName: string; category: string; duration: string; courseStatus: string }, token?: string | null): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/courses`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify(courseData),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.details || data.error || 'Failed to create course');
+    }
+    return data.course;
+  },
+
+  // UPDATE course
+  async updateCourse(id: string, courseData: { courseTitle: string; description: string; instructorName: string; category: string; duration: string; courseStatus: string }, token?: string | null): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(token),
+      body: JSON.stringify(courseData),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.details || data.error || 'Failed to update course');
+    }
+    return data.course;
+  },
+
+  // DELETE course
+  async deleteCourse(id: string, token?: string | null): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(token),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.details || data.error || 'Failed to delete course');
+    }
+    return true;
   }
 };

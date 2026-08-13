@@ -9,6 +9,7 @@ export interface Student {
   phone?: string;
   course?: string;
   bio?: string;
+  isAdmin?: boolean;
 }
 
 export interface StudentAuthResponse {
@@ -23,6 +24,7 @@ export interface StudentAuthResponse {
   phone?: string;
   course?: string;
   bio?: string;
+  isAdmin?: boolean;
 }
 
 export interface AuthState {

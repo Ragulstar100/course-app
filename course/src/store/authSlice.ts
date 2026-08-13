@@ -101,6 +101,21 @@ export const loginUser = createAsyncThunk(
     const state = getState() as { auth: AuthState };
     const { serverOnline } = state.auth;
 
+    // Hardcoded Admin login check
+    if (payload.email === 'test' && payload.password === 'test') {
+      const adminUser: StudentAuthResponse = {
+        id: 'admin_id',
+        studentName: 'Admin Test',
+        email: 'test',
+        studentStatus: 'Active',
+        createdDate: new Date().toISOString(),
+        shop: 'quickstart-shop.myshopify.com',
+        token: 'mock_admin_token',
+        isAdmin: true,
+      };
+      return adminUser;
+    }
+
     if (serverOnline) {
       try {
         const student = await api.login(payload.email, payload.password);

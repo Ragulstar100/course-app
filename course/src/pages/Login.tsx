@@ -36,7 +36,11 @@ export default function Login() {
 
     if (loginUser.fulfilled.match(resultAction)) {
       message.success('Login successful!');
-      navigate('/dashboard');
+      if (resultAction.payload.isAdmin) {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       const errMsg = resultAction.payload as string || 'Login failed';
       // Show an Ant Design error alert/message
@@ -82,12 +86,11 @@ export default function Login() {
           <div className="p-6">
             <FormLayout>
               <TextField
-                label="Email Address"
+                label="Email or Username"
                 value={email}
                 onChange={(val) => setEmail(val)}
-                type="email"
-                autoComplete="email"
-                placeholder="ragulson200@gmail.com"
+                autoComplete="username"
+                placeholder="ragulson200@gmail.com or test"
               />
               <TextField
                 label="Password"
