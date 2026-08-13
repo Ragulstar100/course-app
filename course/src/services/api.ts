@@ -1,6 +1,6 @@
 import type { StudentAuthResponse, Student } from '../types/auth.types';
 
-const API_BASE_URL = 'http://localhost:1000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://course-api-veiu.onrender.com';
 const DEFAULT_SHOP = 'quickstart-shop.myshopify.com';
 
 // Helper to get headers
@@ -142,5 +142,31 @@ export const api = {
       throw new Error(data.details || data.error || 'Failed to delete course');
     }
     return true;
+  },
+
+  // Get student enrollments
+  async getStudentEnrollments(token: string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/student/student-enrollments`, {
+      method: 'GET',
+      headers: getHeaders(token),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch enrollments');
+    }
+    return await response.json();
+  },
+
+  // Enroll in a course (Purchase)
+  async enrollInCourse(token: string, courseId: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/student/student-enroll`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify({ courseId }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.details || data.error || 'Failed to enroll');
+    }
+    return data.enrollment;
   }
 };
