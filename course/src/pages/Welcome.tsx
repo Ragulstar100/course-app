@@ -30,15 +30,6 @@ export default function Welcome() {
     });
   }, [dispatch]);
 
-  const handleToggleServer = (checked: boolean) => {
-    dispatch(setSimulatedServerStatus(checked));
-    if (checked) {
-      message.success('Simulating: Server is Online');
-    } else {
-      message.error('Simulating: Server is Offline');
-    }
-  };
-
   const handleLogout = () => {
     dispatch(logout());
     message.success('Logged out successfully.');
@@ -57,16 +48,6 @@ export default function Welcome() {
           ) : (
             <Badge status="error" text="Offline (Mock Mode active)" />
           )}
-        </Space>
-        
-        <Space size="middle" className="items-center">
-          <span className="text-xs text-slate-500">Toggle Server Simulator:</span>
-          <Switch 
-            checkedChildren="Online" 
-            unCheckedChildren="Offline" 
-            checked={serverOnline} 
-            onChange={handleToggleServer}
-          />
         </Space>
       </div>
 
