@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Card, Button, Text } from '@shopify/polaris';
-import { Alert, message, Badge, Space, Switch } from 'antd';
+import { Alert, message, Badge, Space } from 'antd';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { checkServerStatus, setSimulatedServerStatus, logout } from '../store/authSlice';
+import { checkServerStatus, logout } from '../store/authSlice';
 
 export default function Welcome() {
   const navigate = useNavigate();

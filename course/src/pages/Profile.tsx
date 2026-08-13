@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Card, FormLayout, TextField, Button } from '@shopify/polaris';
 import { Avatar, Dropdown, message } from 'antd';
-import { UserOutlined, LogoutOutlined, SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { updateProfile, logout } from '../store/authSlice';
 
