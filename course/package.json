@@ -10,10 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.3.2",
     "@shopify/polaris": "^13.9.5",
     "@tailwindcss/vite": "^4.3.3",
     "ag-grid-community": "^36.1.0",
     "ag-grid-react": "^36.1.0",
+    "antd": "^6.6.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-router-dom": "^7.18.2",

@@ -1,26 +1,34 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Page, 
   Layout, 
   Card, 
   Button, 
-  Text, 
+  Typography, 
   Badge, 
-  BlockStack, 
-  InlineStack, 
-  Box, 
+  Row, 
+  Col, 
+  Table, 
   Divider, 
-  FormLayout, 
-  TextField, 
-  Banner,
-  Modal
-} from '@shopify/polaris';
+  Modal, 
+  Form, 
+  Input, 
+  Alert, 
+  Space 
+} from 'antd';
+import { 
+  LogoutOutlined, 
+  EditOutlined, 
+  UserOutlined, 
+  BookOutlined, 
+  MailOutlined, 
+  ShopOutlined 
+} from '@ant-design/icons';
 import { useStudent } from '../globalstate/student';
 import { useCourse } from '../globalstate/course';
-import { AgGridReact } from 'ag-grid-react';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
+
+const { Header, Content } = Layout;
+const { Title, Text } = Typography;
 
 export default function StudentDashboard() {
   const { 
@@ -39,18 +47,19 @@ export default function StudentDashboard() {
 
   // Edit profile state
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [studentName, setStudentName] = useState('');
-  const [email, setEmail] = useState('');
+  const [form] = Form.useForm();
 
   // Redirect to login if not logged in
   useEffect(() => {
     if (!currentStudent) {
       navigate('/login');
     } else {
-      setStudentName(currentStudent.studentName);
-      setEmail(currentStudent.email);
+      form.setFieldsValue({
+        studentName: currentStudent.studentName,
+        email: currentStudent.email,
+      });
     }
-  }, [currentStudent, navigate]);
+  }, [currentStudent, navigate, form]);
 
   // Fetch courses dynamically based on student's shop context
   useEffect(() => {
@@ -64,8 +73,9 @@ export default function StudentDashboard() {
     navigate('/login');
   }, [logout, navigate]);
 
-  const handleUpdateProfile = useCallback(async () => {
+  const handleUpdateProfile = useCallback(async (values: any) => {
     if (!currentStudent) return;
+    const { studentName, email } = values;
     if (!studentName || !email) {
       alert('Please fill out all fields.');
       return;
@@ -81,7 +91,7 @@ export default function StudentDashboard() {
       setEditModalOpen(false);
       alert('Profile updated successfully!');
     }
-  }, [currentStudent, studentName, email, updateStudentProfile]);
+  }, [currentStudent, updateStudentProfile]);
 
   const handleEnrollClick = async (courseId: string) => {
     const success = await enrollInCourse(courseId);
@@ -96,321 +106,268 @@ export default function StudentDashboard() {
     c => !enrolledCourseIds.includes(c.id) && c.courseStatus === 'Active'
   );
 
-  // Define AG Grid columns for Enrolled Courses
-  const enrolledColumnDefs = [
-    { 
-      field: 'courseTitle', 
-      headerName: 'Course Title', 
-      minWidth: 200,
-      flex: 1.5,
-      cellRenderer: (params: any) => (
-        <div style={{ fontWeight: '600', color: '#1c1e21', display: 'flex', alignItems: 'center', height: '100%' }}>
-          {params.value}
-        </div>
-      )
-    },
-    { 
-      field: 'category', 
-      headerName: 'Category', 
-      minWidth: 120,
-      flex: 1,
-      cellRenderer: (params: any) => (
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Badge>{params.value}</Badge>
-        </div>
-      )
-    },
-    { 
-      field: 'duration', 
-      headerName: 'Duration', 
-      minWidth: 100,
-      flex: 0.8,
-      cellRenderer: (params: any) => (
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          {params.value}
-        </div>
-      )
-    },
-    { 
-      field: 'enrollmentDate', 
-      headerName: 'Enrolled On', 
-      minWidth: 140,
-      flex: 1.2,
-      cellRenderer: (params: any) => (
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          {params.value ? new Date(params.value).toLocaleDateString() : ''}
-        </div>
-      )
-    },
-    { 
-      field: 'enrollmentStatus', 
-      headerName: 'Status', 
-      minWidth: 130,
-      flex: 1,
-      cellRenderer: (params: any) => {
-        const status = params.value;
-        const tone = status === 'Completed' ? 'success' : 'attention';
-        return (
-          <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-            <Badge tone={tone}>{status}</Badge>
-          </div>
-        );
-      }
-    }
-  ];
-
-  // Define AG Grid columns for Explore Available Courses
-  const availableColumnDefs = [
-    { 
-      field: 'courseTitle', 
-      headerName: 'Course Title', 
-      minWidth: 200,
-      flex: 1.2,
-      cellRenderer: (params: any) => (
-        <div style={{ fontWeight: '600', color: '#1c1e21', display: 'flex', alignItems: 'center', height: '100%' }}>
-          {params.value}
-        </div>
-      )
-    },
-    { 
-      field: 'instructorName', 
-      headerName: 'Instructor', 
-      minWidth: 130,
-      flex: 1,
-      cellRenderer: (params: any) => (
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          {params.value}
-        </div>
-      )
-    },
-    { 
-      field: 'category', 
-      headerName: 'Category', 
-      minWidth: 120,
-      flex: 1,
-      cellRenderer: (params: any) => (
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Badge>{params.value}</Badge>
-        </div>
-      )
-    },
-    { 
-      field: 'duration', 
-      headerName: 'Duration', 
-      minWidth: 100,
-      flex: 0.8,
-      cellRenderer: (params: any) => (
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          {params.value}
-        </div>
-      )
-    },
-    { 
-      field: 'description', 
-      headerName: 'Description', 
-      minWidth: 220,
-      flex: 2,
-      cellRenderer: (params: any) => (
-        <div 
-          title={params.value} 
-          style={{ 
-            whiteSpace: 'nowrap', 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis', 
-            display: 'flex', 
-            alignItems: 'center', 
-            height: '100%',
-            width: '100%'
-          }}
-        >
-          {params.value}
-        </div>
-      )
-    },
-    { 
-      headerName: 'Action', 
-      minWidth: 120,
-      flex: 1,
-      cellRenderer: (params: any) => {
-        const courseId = params.data.id;
-        return (
-          <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-            <Button 
-              size="slim" 
-              variant="primary" 
-              onClick={() => handleEnrollClick(courseId)}
-              loading={studentLoading}
-            >
-              Enroll
-            </Button>
-          </div>
-        );
-      }
-    }
-  ];
-
   if (!currentStudent) {
     return null; // Redirects in useEffect
   }
 
+  const enrolledColumns = [
+    {
+      title: 'Course Title',
+      dataIndex: 'courseTitle',
+      key: 'courseTitle',
+      render: (text: string) => <Text strong style={{ color: '#111827' }}>{text}</Text>,
+    },
+    {
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
+      render: (text: string) => <Badge status="default" text={text} />,
+    },
+    {
+      title: 'Duration',
+      dataIndex: 'duration',
+      key: 'duration',
+    },
+    {
+      title: 'Enrolled On',
+      dataIndex: 'enrollmentDate',
+      key: 'enrollmentDate',
+      render: (date: string) => new Date(date).toLocaleDateString(),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'enrollmentStatus',
+      key: 'enrollmentStatus',
+      render: (status: string) => {
+        const type = status === 'Completed' ? 'success' : 'warning';
+        return <Badge status={type} text={status} />;
+      },
+    },
+  ];
+
+  const availableColumns = [
+    {
+      title: 'Course Title',
+      dataIndex: 'courseTitle',
+      key: 'courseTitle',
+      render: (text: string) => <Text strong style={{ color: '#111827' }}>{text}</Text>,
+    },
+    {
+      title: 'Instructor',
+      dataIndex: 'instructorName',
+      key: 'instructorName',
+    },
+    {
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
+      render: (text: string) => <Badge status="processing" text={text} />,
+    },
+    {
+      title: 'Duration',
+      dataIndex: 'duration',
+      key: 'duration',
+    },
+    {
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true,
+      render: (text: string) => <span title={text}>{text}</span>,
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (_: any, record: any) => (
+        <Button 
+          type="primary" 
+          size="small" 
+          onClick={() => handleEnrollClick(record.id)}
+          loading={studentLoading}
+        >
+          Enroll Now
+        </Button>
+      ),
+    },
+  ];
+
   return (
-    <Page
-      title={`Welcome back, ${currentStudent.studentName}!`}
-      subtitle={`Student Portal Dashboard • Store: ${activeShop}`}
-      primaryAction={{
-        content: 'Edit Profile Details',
-        onAction: () => setEditModalOpen(true),
-      }}
-      secondaryActions={[
-        {
-          content: 'Log Out Account',
-          destructive: true,
-          onAction: handleLogout,
-        }
-      ]}
-    >
-      <BlockStack gap="500">
-        {studentError && (
-          <Banner tone="critical" title="Operation failed">
-            <p>{studentError}</p>
-          </Banner>
-        )}
+    <Layout style={{ minHeight: '100vh', background: '#f9fafb' }}>
+      <Header style={{ 
+        background: '#ffffff', 
+        borderBottom: '1px solid #f0f0f0', 
+        padding: '0 40px', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        height: '70px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', lineHeight: '1.2' }}>
+          <Title level={4} style={{ margin: 0, fontSize: '18px', color: '#111827' }}>
+            Welcome back, {currentStudent.studentName}!
+          </Title>
+          <Text type="secondary" style={{ fontSize: '12px' }}>
+            Student Portal Dashboard • Store: {activeShop}
+          </Text>
+        </div>
 
-        <Layout>
-          {/* Enrolled Courses list */}
-          <Layout.Section>
-            <Card>
-              <BlockStack gap="400">
-                <Text variant="headingLg" as="h2">
-                  My Enrolled Courses ({studentEnrollments.length})
-                </Text>
-                <Divider />
+        <Space size="middle">
+          <Button 
+            type="primary" 
+            icon={<EditOutlined />} 
+            onClick={() => setEditModalOpen(true)}
+            style={{ fontWeight: '500' }}
+          >
+            Edit Profile Details
+          </Button>
+          <Button 
+            danger 
+            icon={<LogoutOutlined />} 
+            onClick={handleLogout}
+            style={{ fontWeight: '500' }}
+          >
+            Log Out Account
+          </Button>
+        </Space>
+      </Header>
 
-                {studentEnrollments.length === 0 ? (
-                  <div style={{ padding: '30px', textAlign: 'center' }}>
-                    <Text variant="bodyLg" as="p" tone="subdued">
-                      You are not enrolled in any courses at the moment.
-                    </Text>
-                    <div style={{ marginTop: '16px' }}>
-                      <a href="#explore-courses" className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-semibold shadow-md hover:bg-indigo-500 transition-colors">
-                        Browse Course Catalog
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="ag-theme-quartz" style={{ height: '300px', width: '100%' }}>
-                    <AgGridReact
-                      rowData={studentEnrollments}
-                      columnDefs={enrolledColumnDefs}
-                      pagination={true}
-                      paginationPageSize={5}
-                      paginationPageSizeSelector={[5, 10, 20]}
-                      rowHeight={52}
-                    />
-                  </div>
-                )}
-              </BlockStack>
-            </Card>
-          </Layout.Section>
+      <Content style={{ padding: '40px', background: '#f9fafb' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          {studentError && (
+            <Alert 
+              message="Operation failed" 
+              description={studentError} 
+              type="error" 
+              showIcon 
+              style={{ marginBottom: '24px', borderRadius: '8px' }} 
+            />
+          )}
 
-          {/* Student Profile Info Sidebar */}
-          <Layout.Section variant="oneThird">
-            <Card>
-              <BlockStack gap="400">
-                <Text variant="headingMd" as="h3">Student Profile</Text>
-                <Divider />
-                <BlockStack gap="300">
+          <Row gutter={[24, 24]}>
+            {/* Main Area: Tables */}
+            <Col xs={24} lg={18}>
+              <Space direction="vertical" size="large" style={{ display: 'flex', width: '100%' }}>
+                {/* Enrolled Courses */}
+                <Card 
+                  title={
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', color: '#111827' }}>
+                      <BookOutlined /> My Enrolled Courses ({studentEnrollments.length})
+                    </span>
+                  }
+                  style={{ borderRadius: '12px', border: '1px solid #f0f0f0' }}
+                >
+                  <Table 
+                    dataSource={studentEnrollments} 
+                    columns={enrolledColumns} 
+                    rowKey="id"
+                    pagination={{ pageSize: 5 }}
+                    locale={{ emptyText: 'You are not enrolled in any courses at the moment.' }}
+                  />
+                </Card>
+
+                {/* Explore Courses */}
+                <Card 
+                  title={
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', color: '#111827' }}>
+                      <ShopOutlined /> Explore Available Courses
+                    </span>
+                  }
+                  style={{ borderRadius: '12px', border: '1px solid #f0f0f0' }}
+                >
+                  <Table 
+                    dataSource={otherAvailableCourses} 
+                    columns={availableColumns} 
+                    rowKey="id"
+                    pagination={{ pageSize: 5 }}
+                    locale={{ emptyText: 'No other courses are available at the moment. You have enrolled in all active catalogs!' }}
+                  />
+                </Card>
+              </Space>
+            </Col>
+
+            {/* Sidebar: Profile Details */}
+            <Col xs={24} lg={6}>
+              <Card 
+                title={
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', color: '#111827' }}>
+                    <UserOutlined /> Student Profile
+                  </span>
+                }
+                style={{ borderRadius: '12px', border: '1px solid #f0f0f0', height: '100%' }}
+              >
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                   <div>
-                    <Text variant="bodySm" as="p" tone="subdued">Full Name</Text>
-                    <Text variant="bodyMd" fontWeight="bold" as="p">{currentStudent.studentName}</Text>
+                    <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Full Name</Text>
+                    <Text strong style={{ fontSize: '14px', color: '#111827' }}>{currentStudent.studentName}</Text>
                   </div>
+                  <Divider style={{ margin: '12px 0' }} />
                   <div>
-                    <Text variant="bodySm" as="p" tone="subdued">Email Address</Text>
-                    <Text variant="bodyMd" fontWeight="bold" as="p">{currentStudent.email}</Text>
+                    <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Email Address</Text>
+                    <Text strong style={{ fontSize: '14px', color: '#111827' }}>{currentStudent.email}</Text>
                   </div>
+                  <Divider style={{ margin: '12px 0' }} />
                   <div>
-                    <Text variant="bodySm" as="p" tone="subdued">Account Status</Text>
-                    <Badge tone={currentStudent.studentStatus === 'Active' ? 'success' : 'attention'}>
-                      {currentStudent.studentStatus}
-                    </Badge>
+                    <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Account Status</Text>
+                    <Badge status={currentStudent.studentStatus === 'Active' ? 'success' : 'warning'} text={currentStudent.studentStatus} />
                   </div>
+                  <Divider style={{ margin: '12px 0' }} />
                   <div>
-                    <Text variant="bodySm" as="p" tone="subdued">Total Enrollments</Text>
-                    <Text variant="bodyMd" fontWeight="bold" as="p">{studentEnrollments.length} Courses</Text>
+                    <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Total Enrollments</Text>
+                    <Text strong style={{ fontSize: '14px', color: '#111827' }}>{studentEnrollments.length} Courses</Text>
                   </div>
-                </BlockStack>
-              </BlockStack>
-            </Card>
-          </Layout.Section>
-
-          {/* Explore Other Courses */}
-          <Layout.Section>
-            <div id="explore-courses">
-              <Card>
-                <BlockStack gap="400">
-                  <Text variant="headingLg" as="h2">Explore Available Courses</Text>
-                  <Divider />
-
-                  {otherAvailableCourses.length === 0 ? (
-                    <Text variant="bodyMd" as="p" tone="subdued">
-                      No other courses are available at the moment. You have enrolled in all active catalogs!
-                    </Text>
-                  ) : (
-                    <div className="ag-theme-quartz" style={{ height: '350px', width: '100%' }}>
-                      <AgGridReact
-                        rowData={otherAvailableCourses}
-                        columnDefs={availableColumnDefs}
-                        pagination={true}
-                        paginationPageSize={5}
-                        paginationPageSizeSelector={[5, 10, 20]}
-                        rowHeight={52}
-                      />
-                    </div>
-                  )}
-                </BlockStack>
+                </Space>
               </Card>
-            </div>
-          </Layout.Section>
-        </Layout>
-      </BlockStack>
+            </Col>
+          </Row>
+        </div>
+      </Content>
 
       {/* Edit Profile Modal */}
       <Modal
         open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
+        onCancel={() => setEditModalOpen(false)}
         title="Edit Profile Information"
-        primaryAction={{
-          content: 'Update Profile',
-          onAction: handleUpdateProfile,
-          loading: studentLoading
-        }}
-        secondaryActions={[
-          {
-            content: 'Cancel',
-            onAction: () => setEditModalOpen(false),
-          },
-        ]}
+        footer={null}
+        destroyOnClose
       >
-        <Modal.Section>
-          <FormLayout>
-            <TextField
-              label="Full Name"
-              value={studentName}
-              onChange={(val) => setStudentName(val)}
-              autoComplete="name"
-              requiredIndicator
-            />
-            <TextField
-              label="Email Address"
-              type="email"
-              value={email}
-              onChange={(val) => setEmail(val)}
-              autoComplete="email"
-              requiredIndicator
-            />
-          </FormLayout>
-        </Modal.Section>
+        <Form 
+          form={form} 
+          layout="vertical" 
+          onFinish={handleUpdateProfile}
+          style={{ marginTop: '16px' }}
+        >
+          <Form.Item 
+            label="Full Name" 
+            name="studentName"
+            rules={[{ required: true, message: 'Please input your name!' }]}
+          >
+            <Input prefix={<UserOutlined style={{ color: '#bfbfbf' }} />} />
+          </Form.Item>
+          
+          <Form.Item 
+            label="Email Address" 
+            name="email"
+            rules={[
+              { required: true, message: 'Please input your email!' },
+              { type: 'email', message: 'Please input a valid email!' }
+            ]}
+          >
+            <Input prefix={<MailOutlined style={{ color: '#bfbfbf' }} />} />
+          </Form.Item>
+
+          <Form.Item style={{ textAlign: 'right', marginBottom: 0, marginTop: '24px' }}>
+            <Space>
+              <Button onClick={() => setEditModalOpen(false)}>Cancel</Button>
+              <Button type="primary" htmlType="submit" loading={studentLoading}>
+                Update Profile
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
       </Modal>
-    </Page>
+    </Layout>
   );
 }

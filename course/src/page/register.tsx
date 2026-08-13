@@ -1,20 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Page, 
-  Card, 
-  Form, 
-  FormLayout, 
-  TextField, 
-  Button, 
-  Banner, 
-  Select, 
-  BlockStack, 
-  Text, 
-  Link
-} from '@shopify/polaris';
+import { Card, Form, Input, Select, Button, Alert, Typography, Space } from 'antd';
+import { UserOutlined, MailOutlined, LockOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useStudent } from '../globalstate/student';
 import { useCourse } from '../globalstate/course';
+
+const { Title, Text, Link } = Typography;
 
 export default function RegisterPage() {
   const { registerStudent, activeShop, loading: studentLoading, error: studentError } = useStudent();
@@ -46,7 +37,7 @@ export default function RegisterPage() {
     value: c.id,
   }));
 
-  const handleSubmit = useCallback(async () => {
+  const onFinish = async () => {
     if (!studentName || !email || !password || !enrolledCourseId) {
       alert('Please fill out all fields and select a course.');
       return;
@@ -61,7 +52,7 @@ export default function RegisterPage() {
       alert('Registration successful! Please log in.');
       navigate('/login');
     }
-  }, [studentName, email, password, enrolledCourseId, registerStudent, navigate]);
+  };
 
   return (
     <div style={{ 
@@ -69,116 +60,151 @@ export default function RegisterPage() {
       justifyContent: 'center', 
       alignItems: 'center', 
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f0f2f5 0%, #e2e8f0 100%)',
+      background: '#f9fafb',
       padding: '20px'
     }}>
-      <div style={{ width: '100%', maxWidth: '520px' }}>
-        <Page narrowWidth>
-          <BlockStack gap="600">
-            {/* Header branding */}
-            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-              <Text variant="headingXl" as="h1" tone="base">
-                Course Academy
-              </Text>
-              <Text variant="bodyMd" as="p" tone="subdued">
-                Join our learning community and start studying today
-              </Text>
+      <div style={{ width: '100%', maxWidth: '480px' }}>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          {/* Header branding */}
+          <div style={{ textAlign: 'center' }}>
+            <Title level={2} style={{ margin: '0 0 8px', fontSize: '28px', color: '#111827' }}>
+              Course Academy
+            </Title>
+            <Text type="secondary">
+              Join our learning community and start studying today
+            </Text>
+          </div>
+
+          <Card 
+            style={{ 
+              borderRadius: '12px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+              border: '1px solid #f0f0f0',
+              background: '#ffffff'
+            }}
+            bodyStyle={{ padding: '32px' }}
+          >
+            <Title level={3} style={{ margin: '0 0 24px', fontSize: '20px', textAlign: 'center', color: '#111827' }}>
+              Student Registration
+            </Title>
+            
+            {studentError && (
+              <Alert 
+                message={studentError} 
+                type="error" 
+                showIcon 
+                style={{ marginBottom: '20px', borderRadius: '8px' }} 
+              />
+            )}
+
+            {activeCourses.length === 0 && !coursesLoading && (
+              <Alert 
+                message="No courses available"
+                description={
+                  <span>
+                    There are no active courses available for registration right now.{' '}
+                    <Link onClick={() => navigate('/courses')} style={{ fontWeight: '500' }}>Go to Course Management</Link> to create one.
+                  </span>
+                }
+                type="warning"
+                showIcon
+                style={{ marginBottom: '20px', borderRadius: '8px' }}
+              />
+            )}
+
+            <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
+              <Form.Item 
+                label="Full Name" 
+                required
+              >
+                <Input 
+                  prefix={<UserOutlined style={{ color: '#bfbfbf' }} />} 
+                  placeholder="e.g. Alex Johnson" 
+                  value={studentName}
+                  onChange={(e) => setStudentName(e.target.value)}
+                  disabled={activeCourses.length === 0}
+                  style={{ height: '40px', borderRadius: '6px' }}
+                />
+              </Form.Item>
+
+              <Form.Item 
+                label="Email Address" 
+                required
+              >
+                <Input 
+                  prefix={<MailOutlined style={{ color: '#bfbfbf' }} />} 
+                  placeholder="e.g. alex@example.com" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={activeCourses.length === 0}
+                  style={{ height: '40px', borderRadius: '6px' }}
+                />
+              </Form.Item>
+
+              <Form.Item 
+                label="Password" 
+                required
+              >
+                <Input.Password 
+                  prefix={<LockOutlined style={{ color: '#bfbfbf' }} />} 
+                  placeholder="At least 6 characters" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={activeCourses.length === 0}
+                  style={{ height: '40px', borderRadius: '6px' }}
+                />
+              </Form.Item>
+              
+              {activeCourses.length > 0 && (
+                <Form.Item 
+                  label="Choose Your Course" 
+                  required
+                >
+                  <Select
+                    options={courseOptions}
+                    value={enrolledCourseId}
+                    onChange={(val) => setEnrolledCourseId(val)}
+                    style={{ height: '40px' }}
+                  />
+                </Form.Item>
+              )}
+
+              <Form.Item style={{ marginBottom: '16px', marginTop: '24px' }}>
+                <Button 
+                  type="primary" 
+                  htmlType="submit" 
+                  block 
+                  loading={studentLoading}
+                  disabled={activeCourses.length === 0}
+                  size="large"
+                  style={{ height: '42px', fontWeight: '600', borderRadius: '6px' }}
+                >
+                  Register Account
+                </Button>
+              </Form.Item>
+            </Form>
+
+            <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '20px', textAlign: 'center', fontSize: '13px' }}>
+              <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                <Text type="secondary">
+                  Already have an account?{' '}
+                  <Link onClick={() => navigate('/login')} style={{ fontWeight: '500' }}>Log in here</Link>
+                </Text>
+                <Text type="secondary">
+                  Are you an administrator?{' '}
+                  <Link onClick={() => navigate('/courses')} style={{ fontWeight: '500' }}>Manage Courses</Link>
+                </Text>
+              </Space>
             </div>
+          </Card>
 
-            <Card>
-              <BlockStack gap="400">
-                <Text variant="headingLg" as="h2">Student Registration</Text>
-
-                {studentError && (
-                  <Banner tone="critical" title="Registration failed">
-                    <p>{studentError}</p>
-                  </Banner>
-                )}
-
-                {activeCourses.length === 0 && !coursesLoading && (
-                  <Banner tone="warning" title="No courses available">
-                    <p>
-                      There are no active courses available for registration right now.{' '}
-                      <Link onClick={() => navigate('/courses')}>Go to Course Management</Link> to create one.
-                    </p>
-                  </Banner>
-                )}
-
-                <Form onSubmit={handleSubmit}>
-                  <FormLayout>
-                    <TextField
-                      label="Full Name"
-                      value={studentName}
-                      onChange={(val) => setStudentName(val)}
-                      autoComplete="name"
-                      requiredIndicator
-                      placeholder="e.g. Alex Johnson"
-                      disabled={activeCourses.length === 0}
-                    />
-                    <TextField
-                      label="Email Address"
-                      type="email"
-                      value={email}
-                      onChange={(val) => setEmail(val)}
-                      autoComplete="email"
-                      requiredIndicator
-                      placeholder="e.g. alex@example.com"
-                      disabled={activeCourses.length === 0}
-                    />
-                    <TextField
-                      label="Password"
-                      type="password"
-                      value={password}
-                      onChange={(val) => setPassword(val)}
-                      autoComplete="new-password"
-                      requiredIndicator
-                      placeholder="At least 6 characters"
-                      disabled={activeCourses.length === 0}
-                    />
-                    
-                    {activeCourses.length > 0 && (
-                      <Select
-                        label="Choose Your Course"
-                        options={courseOptions}
-                        value={enrolledCourseId}
-                        onChange={(val) => setEnrolledCourseId(val)}
-                      />
-                    )}
-
-                    <Button 
-                      submit 
-                      variant="primary" 
-                      loading={studentLoading} 
-                      fullWidth 
-                      size="large"
-                      disabled={activeCourses.length === 0}
-                    >
-                      Register Account
-                    </Button>
-                  </FormLayout>
-                </Form>
-
-                <div style={{ borderTop: '1px solid #e1e3e5', paddingTop: '16px' }}>
-                  <BlockStack gap="200" align="center">
-                    <Text variant="bodyMd" as="p" tone="subdued">
-                      Already have an account?{' '}
-                      <Link onClick={() => navigate('/login')}>Log in here</Link>
-                    </Text>
-                    <Text variant="bodyMd" as="p" tone="subdued">
-                      Are you an administrator?{' '}
-                      <Link onClick={() => navigate('/courses')}>Manage Courses</Link>
-                    </Text>
-                  </BlockStack>
-                </div>
-              </BlockStack>
-            </Card>
-
-            {/* Back to Home Link */}
-            <div style={{ textAlign: 'center' }}>
-              <Link onClick={() => navigate('/')}>← Back to welcome screen</Link>
-            </div>
-          </BlockStack>
-        </Page>
+          {/* Back to Home Link */}
+          <div style={{ textAlign: 'center' }}>
+            <Link onClick={() => navigate('/')} style={{ color: '#8c8c8c' }}>
+              <ArrowLeftOutlined style={{ marginRight: '6px' }} /> Back to welcome screen
+            </Link>
+          </div>
+        </Space>
       </div>
     </div>
   );

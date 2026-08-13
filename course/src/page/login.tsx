@@ -1,18 +1,10 @@
-import { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Page, 
-  Card, 
-  Form, 
-  FormLayout, 
-  TextField, 
-  Button, 
-  Banner, 
-  BlockStack, 
-  Text, 
-  Link
-} from '@shopify/polaris';
+import { Card, Form, Input, Button, Alert, Typography, Space } from 'antd';
+import { MailOutlined, LockOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useStudent } from '../globalstate/student';
+
+const { Title, Text, Link } = Typography;
 
 export default function LoginPage() {
   const { loginStudent, loading, error } = useStudent();
@@ -21,13 +13,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = useCallback(async () => {
+  const onFinish = async () => {
     if (!email || !password) return;
     const success = await loginStudent({ email, password });
     if (success) {
       navigate('/dashboard');
     }
-  }, [email, password, loginStudent, navigate]);
+  };
 
   return (
     <div style={{ 
@@ -35,79 +27,105 @@ export default function LoginPage() {
       justifyContent: 'center', 
       alignItems: 'center', 
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f0f2f5 0%, #e2e8f0 100%)',
+      background: '#f9fafb',
       padding: '20px'
     }}>
-      <div style={{ width: '100%', maxWidth: '480px' }}>
-        <Page narrowWidth>
-          <BlockStack gap="600">
-            {/* Header branding */}
-            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-              <Text variant="headingXl" as="h1" tone="base">
-                Course Academy
-              </Text>
-              <Text variant="bodyMd" as="p" tone="subdued">
-                Unlock your potential with premium learning courses
-              </Text>
+      <div style={{ width: '100%', maxWidth: '440px' }}>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          {/* Header branding */}
+          <div style={{ textAlign: 'center' }}>
+            <Title level={2} style={{ margin: '0 0 8px', fontSize: '28px', color: '#111827' }}>
+              Course Academy
+            </Title>
+            <Text type="secondary">
+              Unlock your potential with premium learning courses
+            </Text>
+          </div>
+
+          <Card 
+            style={{ 
+              borderRadius: '12px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+              border: '1px solid #f0f0f0',
+              background: '#ffffff'
+            }}
+            bodyStyle={{ padding: '32px' }}
+          >
+            <Title level={3} style={{ margin: '0 0 24px', fontSize: '20px', textAlign: 'center', color: '#111827' }}>
+              Student Login
+            </Title>
+            
+            {error && (
+              <Alert 
+                message={error} 
+                type="error" 
+                showIcon 
+                style={{ marginBottom: '20px', borderRadius: '8px' }} 
+              />
+            )}
+
+            <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
+              <Form.Item 
+                label="Email Address" 
+                required
+              >
+                <Input 
+                  prefix={<MailOutlined style={{ color: '#bfbfbf' }} />} 
+                  placeholder="e.g. alex@example.com" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{ height: '40px', borderRadius: '6px' }}
+                />
+              </Form.Item>
+
+              <Form.Item 
+                label="Password" 
+                required
+              >
+                <Input.Password 
+                  prefix={<LockOutlined style={{ color: '#bfbfbf' }} />} 
+                  placeholder="••••••••" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{ height: '40px', borderRadius: '6px' }}
+                />
+              </Form.Item>
+
+              <Form.Item style={{ marginBottom: '16px' }}>
+                <Button 
+                  type="primary" 
+                  htmlType="submit" 
+                  block 
+                  loading={loading}
+                  size="large"
+                  style={{ height: '42px', fontWeight: '600', borderRadius: '6px' }}
+                >
+                  Log In
+                </Button>
+              </Form.Item>
+            </Form>
+
+            <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '20px', textAlign: 'center', fontSize: '13px' }}>
+              <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                <Text type="secondary">
+                  Don't have a student account?{' '}
+                  <Link onClick={() => navigate('/register')} style={{ fontWeight: '500' }}>Register here</Link>
+                </Text>
+                <Text type="secondary">
+                  Are you an administrator?{' '}
+                  <Link onClick={() => navigate('/courses')} style={{ fontWeight: '500' }}>Manage Courses</Link>
+                </Text>
+              </Space>
             </div>
+          </Card>
 
-            <Card>
-              <BlockStack gap="400">
-                <Text variant="headingLg" as="h2">Student Login</Text>
-                
-                {error && (
-                  <Banner tone="critical" title="Login failed">
-                    <p>{error}</p>
-                  </Banner>
-                )}
-
-                <Form onSubmit={handleSubmit}>
-                  <FormLayout>
-                    <TextField
-                      label="Email Address"
-                      type="email"
-                      value={email}
-                      onChange={(val) => setEmail(val)}
-                      autoComplete="email"
-                      requiredIndicator
-                      placeholder="e.g. alex@example.com"
-                    />
-                    <TextField
-                      label="Password"
-                      type="password"
-                      value={password}
-                      onChange={(val) => setPassword(val)}
-                      autoComplete="current-password"
-                      requiredIndicator
-                      placeholder="••••••••"
-                    />
-                    <Button submit variant="primary" loading={loading} fullWidth size="large">
-                      Log In
-                    </Button>
-                  </FormLayout>
-                </Form>
-
-                <div style={{ borderTop: '1px solid #e1e3e5', paddingTop: '16px' }}>
-                  <BlockStack gap="200" align="center">
-                    <Text variant="bodyMd" as="p" tone="subdued">
-                      Don't have a student account?{' '}
-                      <Link onClick={() => navigate('/register')}>Register here</Link>
-                    </Text>
-                    <Text variant="bodyMd" as="p" tone="subdued">
-                      Are you an administrator?{' '}
-                      <Link onClick={() => navigate('/courses')}>Manage Courses</Link>
-                    </Text>
-                  </BlockStack>
-                </div>
-              </BlockStack>
-            </Card>
-
-            {/* Back to Home Link */}
-            <div style={{ textAlign: 'center' }}>
-              <Link onClick={() => navigate('/')}>← Back to welcome screen</Link>
-            </div>
-          </BlockStack>
-        </Page>
+          {/* Back to Home Link */}
+          <div style={{ textAlign: 'center' }}>
+            <Link onClick={() => navigate('/')} style={{ color: '#8c8c8c' }}>
+              <ArrowLeftOutlined style={{ marginRight: '6px' }} /> Back to welcome screen
+            </Link>
+          </div>
+        </Space>
       </div>
     </div>
   );
