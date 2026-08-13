@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
-import type { AuthState, StudentAuthResponse, Student } from '../types/auth.types';
+import type { AuthState, StudentAuthResponse } from '../types/auth.types';
 import { api } from '../services/api';
 
 // Retrieve initial auth state from localStorage
@@ -14,19 +13,6 @@ const initialState: AuthState = {
   error: null,
   serverOnline: false,
   checkingServer: true,
-};
-
-// Key for mock local DB in localStorage
-const MOCK_DB_KEY = 'mock_student_db';
-
-// Helper for Mock DB
-const getMockDB = (): Student[] => {
-  const db = localStorage.getItem(MOCK_DB_KEY);
-  return db ? JSON.parse(db) : [];
-};
-
-const saveMockDB = (db: Student[]) => {
-  localStorage.setItem(MOCK_DB_KEY, JSON.stringify(db));
 };
 
 // Thunk to check server health
@@ -47,46 +33,13 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (
     payload: { studentName: string; email: string; password: string },
-    { getState, rejectWithValue }
+    { rejectWithValue }
   ) => {
-    const state = getState() as { auth: AuthState };
-    const { serverOnline } = state.auth;
-
-    if (serverOnline) {
-      try {
-        const student = await api.register(payload.studentName, payload.email, payload.password);
-        return student;
-      } catch (err: any) {
-        return rejectWithValue(err.message || 'Registration failed');
-      }
-    } else {
-      // Mock flow
-      const db = getMockDB();
-      const existing = db.find((u) => u.email.toLowerCase() === payload.email.toLowerCase());
-      if (existing) {
-        // Redirection logic is handled in the Component on duplicate registration attempt.
-        // We will throw a special error indicating the user already exists.
-        return rejectWithValue('EMAIL_ALREADY_EXISTS');
-      }
-
-      const newStudent: Student = {
-        id: crypto.randomUUID(),
-        studentName: payload.studentName,
-        email: payload.email,
-        studentStatus: 'Active',
-        createdDate: new Date().toISOString(),
-        shop: 'quickstart-shop.myshopify.com',
-      };
-
-      db.push(newStudent);
-      saveMockDB(db);
-
-      // Return simulated auth response
-      const authRes: StudentAuthResponse = {
-        ...newStudent,
-        token: `mock_jwt_token_${newStudent.id}`,
-      };
-      return authRes;
+    try {
+      const student = await api.register(payload.studentName, payload.email, payload.password);
+      return student;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Registration failed');
     }
   }
 );
@@ -96,11 +49,8 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (
     payload: { email: string; password: string },
-    { getState, rejectWithValue }
+    { rejectWithValue }
   ) => {
-    const state = getState() as { auth: AuthState };
-    const { serverOnline } = state.auth;
-
     // Hardcoded Admin login check
     if (payload.email === 'test' && payload.password === 'test') {
       const adminUser: StudentAuthResponse = {
@@ -116,31 +66,11 @@ export const loginUser = createAsyncThunk(
       return adminUser;
     }
 
-    if (serverOnline) {
-      try {
-        const student = await api.login(payload.email, payload.password);
-        return student;
-      } catch (err: any) {
-        return rejectWithValue(err.message || 'Login failed');
-      }
-    } else {
-      // Mock flow
-      const db = getMockDB();
-      const student = db.find(
-        (u) => u.email.toLowerCase() === payload.email.toLowerCase()
-      );
-
-      // In mock flow, let's assume password is correct if the student exists
-      // (For this mock test, password is '123456' as specified in prompt)
-      if (!student || payload.password !== '123456') {
-        return rejectWithValue('Invalid email or password');
-      }
-
-      const authRes: StudentAuthResponse = {
-        ...student,
-        token: `mock_jwt_token_${student.id}`,
-      };
-      return authRes;
+    try {
+      const student = await api.login(payload.email, payload.password);
+      return student;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Login failed');
     }
   }
 );
@@ -153,47 +83,24 @@ export const updateProfile = createAsyncThunk(
     { getState, rejectWithValue }
   ) => {
     const state = getState() as { auth: AuthState };
-    const { user, token, serverOnline } = state.auth;
+    const { token } = state.auth;
 
-    if (!user || !token) {
+    if (!token) {
       return rejectWithValue('User not authenticated');
     }
 
-    if (serverOnline) {
-      try {
-        const updatedStudent = await api.updateProfile(
-          token,
-          payload.studentName,
-          payload.email,
-          payload.phone,
-          payload.course,
-          payload.bio
-        );
-        return updatedStudent;
-      } catch (err: any) {
-        return rejectWithValue(err.message || 'Profile update failed');
-      }
-    } else {
-      // Mock flow
-      const db = getMockDB();
-      const index = db.findIndex((u) => u.id === user.id);
-      if (index === -1) {
-        return rejectWithValue('Student not found in mock database');
-      }
-
-      const updatedStudent: Student = {
-        ...db[index],
-        studentName: payload.studentName,
-        email: payload.email,
-        phone: payload.phone,
-        course: payload.course,
-        bio: payload.bio,
-      };
-
-      db[index] = updatedStudent;
-      saveMockDB(db);
-
+    try {
+      const updatedStudent = await api.updateProfile(
+        token,
+        payload.studentName,
+        payload.email,
+        payload.phone,
+        payload.course,
+        payload.bio
+      );
       return updatedStudent;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Profile update failed');
     }
   }
 );
@@ -211,10 +118,6 @@ const authSlice = createSlice({
     },
     clearError(state) {
       state.error = null;
-    },
-    setSimulatedServerStatus(state, action: PayloadAction<boolean>) {
-      state.serverOnline = action.payload;
-      state.checkingServer = false;
     }
   },
   extraReducers: (builder) => {
@@ -238,8 +141,6 @@ const authSlice = createSlice({
     });
     builder.addCase(registerUser.fulfilled, (state) => {
       state.loading = false;
-      // We don't log them in automatically because the user request says:
-      // "after register automatic goes login page and 123456"
     });
     builder.addCase(registerUser.rejected, (state, action) => {
       state.loading = false;
@@ -285,5 +186,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setSimulatedServerStatus } = authSlice.actions;
+export const { logout, clearError } = authSlice.actions;
 export default authSlice.reducer;

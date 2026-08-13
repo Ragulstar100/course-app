@@ -66,8 +66,8 @@ export default function Welcome() {
               {!serverOnline && (
                 <div className="max-w-xl mx-auto mb-8">
                   <Alert
-                    message="Server is Offline"
-                    description="The course-api server is currently offline. You can still test the entire application registration, login, profile, and logout flow using the Mock Offline Database."
+                    message="Server Connection Warning"
+                    description="The course-api server is currently offline. Please ensure the backend server is running to use the application."
                     type="warning"
                     showIcon
                     className="text-left"

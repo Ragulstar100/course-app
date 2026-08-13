@@ -19,9 +19,6 @@ interface Course {
   shop: string;
 }
 
-const MOCK_COURSE_DB_KEY = 'mock_course_db';
-const MOCK_ENROLLMENT_DB_KEY = 'mock_enrollment_db';
-
 const DEFAULT_COURSES: Course[] = [
   {
     id: 'course-1',
@@ -57,52 +54,28 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
 
   const loadData = async () => {
+    if (!user?.token) return;
     setLoading(true);
     try {
-      if (serverOnline && user?.token) {
-        // Fetch courses from server
-        const coursesData = await api.getCourses();
-        const activeServerCourses = coursesData.filter(c => c.courseStatus === 'Active');
-        
-        // Always include DEFAULT_COURSES to ensure they show up in dev/production
-        const merged = [...activeServerCourses];
-        DEFAULT_COURSES.forEach(defCourse => {
-          if (!merged.some(c => c.id === defCourse.id)) {
-            merged.push(defCourse);
-          }
-        });
-        setCourses(merged);
-
-        // Fetch enrollments from server
-        const enrollmentData = await api.getStudentEnrollments(user.token);
-        setEnrolledCourseIds(enrollmentData.map((e: any) => e.courseId));
-      } else {
-        // Fetch courses from mock local storage
-        const localCourses = localStorage.getItem(MOCK_COURSE_DB_KEY);
-        const parsedCourses: Course[] = localCourses ? JSON.parse(localCourses) : DEFAULT_COURSES;
-        if (!localCourses) {
-          localStorage.setItem(MOCK_COURSE_DB_KEY, JSON.stringify(DEFAULT_COURSES));
+      // Fetch courses from server
+      const coursesData = await api.getCourses();
+      const activeServerCourses = coursesData.filter(c => c.courseStatus === 'Active');
+      
+      // Always include DEFAULT_COURSES to ensure they show up in dev/production
+      const merged = [...activeServerCourses];
+      DEFAULT_COURSES.forEach(defCourse => {
+        if (!merged.some(c => c.id === defCourse.id)) {
+          merged.push(defCourse);
         }
-        const activeLocalCourses = parsedCourses.filter(c => c.courseStatus === 'Active');
-        
-        // Always include DEFAULT_COURSES
-        const merged = [...activeLocalCourses];
-        DEFAULT_COURSES.forEach(defCourse => {
-          if (!merged.some(c => c.id === defCourse.id)) {
-            merged.push(defCourse);
-          }
-        });
-        setCourses(merged);
+      });
+      setCourses(merged);
 
-        // Fetch enrollments from mock local storage
-        const localEnrollments = localStorage.getItem(MOCK_ENROLLMENT_DB_KEY);
-        const parsedEnrollments = localEnrollments ? JSON.parse(localEnrollments) : [];
-        const studentEnrollments = parsedEnrollments.filter((e: any) => e.studentId === user?.id);
-        setEnrolledCourseIds(studentEnrollments.map((e: any) => e.courseId));
-      }
+      // Fetch enrollments from server
+      const enrollmentData = await api.getStudentEnrollments(user.token);
+      setEnrolledCourseIds(enrollmentData.map((e: any) => e.courseId));
     } catch (err: any) {
       console.error('Error loading student dashboard data:', err);
-      message.error('Failed to load courses or enrollment data.');
+      message.error('Failed to load courses or enrollment data from server.');
     } finally {
       setLoading(false);
     }
@@ -113,42 +86,15 @@ export default function Dashboard() {
   }, [serverOnline, user]);
 
   const handlePurchase = async (courseId: string) => {
-    if (!user) {
+    if (!user?.token) {
       message.error('You must be logged in to purchase a course.');
       return;
     }
 
     try {
-      if (serverOnline && user.token) {
-        await api.enrollInCourse(user.token, courseId);
-        message.success('Course purchased successfully!');
-        loadData();
-      } else {
-        // Offline Mock purchase
-        const localEnrollments = localStorage.getItem(MOCK_ENROLLMENT_DB_KEY);
-        const parsedEnrollments = localEnrollments ? JSON.parse(localEnrollments) : [];
-        
-        // Double check already enrolled
-        const alreadyEnrolled = parsedEnrollments.some((e: any) => e.studentId === user.id && e.courseId === courseId);
-        if (alreadyEnrolled) {
-          message.warning('You already purchased this course.');
-          return;
-        }
-
-        const newEnrollment = {
-          id: crypto.randomUUID(),
-          studentId: user.id,
-          courseId,
-          enrollmentDate: new Date().toISOString(),
-          enrollmentStatus: 'In Progress',
-          shop: 'quickstart-shop.myshopify.com'
-        };
-
-        parsedEnrollments.push(newEnrollment);
-        localStorage.setItem(MOCK_ENROLLMENT_DB_KEY, JSON.stringify(parsedEnrollments));
-        message.success('Course purchased successfully (Offline Mock)!');
-        loadData();
-      }
+      await api.enrollInCourse(user.token, courseId);
+      message.success('Course purchased successfully!');
+      loadData();
     } catch (err: any) {
       message.error(err.message || 'Purchase failed.');
     }
