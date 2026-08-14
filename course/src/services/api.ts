@@ -1,6 +1,6 @@
 import type { StudentAuthResponse, Student } from '../types/auth.types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:1000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://course-api-veiu.onrender.com';
 
 const getInitialShop = (): string => {
   if (typeof window !== 'undefined') {
