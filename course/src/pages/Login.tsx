@@ -93,6 +93,7 @@ export default function Login() {
                 value={email}
                 onChange={(val) => setEmail(val)}
                 autoComplete="username"
+                placeholder="Enter your email or username"
               />
               <TextField
                 label="Password"
@@ -100,6 +101,7 @@ export default function Login() {
                 onChange={(val) => setPassword(val)}
                 type="password"
                 autoComplete="current-password"
+                placeholder="Enter your password"
               />
               
               <div className="mt-4">

@@ -100,6 +100,7 @@ export default function Register() {
                 value={name}
                 onChange={(val) => setName(val)}
                 autoComplete="name"
+                placeholder="Enter your full name"
               />
               <TextField
                 label="Email Address"
@@ -107,6 +108,7 @@ export default function Register() {
                 onChange={(val) => setEmail(val)}
                 type="email"
                 autoComplete="email"
+                placeholder="Enter your email address"
               />
               <TextField
                 label="Password"
@@ -114,6 +116,7 @@ export default function Register() {
                 onChange={(val) => setPassword(val)}
                 type="password"
                 autoComplete="new-password"
+                placeholder="Enter your password"
               />
               <TextField
                 label="Confirm Password"
@@ -121,6 +124,7 @@ export default function Register() {
                 onChange={(val) => setConfirmPassword(val)}
                 type="password"
                 autoComplete="new-password"
+                placeholder="Confirm your password"
               />
               
               <div className="mt-4">
