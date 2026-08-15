@@ -13,23 +13,15 @@ export default function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [shop, setShop] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlShop = params.get('shop');
-    if (urlShop) return urlShop;
-    const storedShop = localStorage.getItem('course_shop_domain');
-    return storedShop || 'sample';
-  });
   const [loginAttempted, setLoginAttempted] = useState(false);
 
   // Autofill if coming from Register page
   useEffect(() => {
     dispatch(clearError());
     if (location.state) {
-      const state = location.state as { email?: string; password?: string; shop?: string };
+      const state = location.state as { email?: string; password?: string };
       if (state.email) setEmail(state.email);
       if (state.password) setPassword(state.password);
-      if (state.shop) setShop(state.shop);
     }
   }, [location.state, dispatch]);
 
@@ -40,7 +32,7 @@ export default function Login() {
     }
 
     setLoginAttempted(true);
-    const resultAction = await dispatch(loginUser({ email: email.trim(), password, shop: shop ? shop.trim() : undefined }));
+    const resultAction = await dispatch(loginUser({ email: email.trim(), password }));
 
     if (loginUser.fulfilled.match(resultAction)) {
       message.success('Login successful!');
@@ -101,7 +93,6 @@ export default function Login() {
                 value={email}
                 onChange={(val) => setEmail(val)}
                 autoComplete="username"
-                placeholder="ragulson200@gmail.com or test"
               />
               <TextField
                 label="Password"
@@ -109,7 +100,6 @@ export default function Login() {
                 onChange={(val) => setPassword(val)}
                 type="password"
                 autoComplete="current-password"
-                placeholder="••••••"
               />
               
               <div className="mt-4">

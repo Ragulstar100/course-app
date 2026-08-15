@@ -20,44 +20,6 @@ interface Student {
   bio?: string;
 }
 
-const MOCK_STUDENT_DB_KEY = 'mock_student_db';
-
-const DEFAULT_STUDENTS: Student[] = [
-  {
-    id: 'student-1',
-    studentName: 'Ragul Star',
-    email: 'ragulstar100@gmail.com',
-    studentStatus: 'Active',
-    phone: '+91 98765 43210',
-    course: 'Development',
-    bio: 'Passionate learner focused on building high-performance Shopify apps with Vite, React, Polaris, and Node.js.',
-    createdDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    shop: 'quickstart-shop.myshopify.com'
-  },
-  {
-    id: 'student-2',
-    studentName: 'Alice Johnson',
-    email: 'alice.j@example.com',
-    studentStatus: 'Active',
-    phone: '+1 555-0143',
-    course: 'Design',
-    bio: 'UI/UX specialist diving deep into typography, interactive mockups, and modular component design systems.',
-    createdDate: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-    shop: 'quickstart-shop.myshopify.com'
-  },
-  {
-    id: 'student-3',
-    studentName: 'Michael Brown',
-    email: 'michael.brown@example.com',
-    studentStatus: 'Inactive',
-    phone: 'Not provided',
-    course: 'Marketing',
-    bio: 'Growth hacker analyzing search optimization methodologies, keyword tracking, and conversions auditing.',
-    createdDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
-    shop: 'partner-development-shop.myshopify.com'
-  }
-];
-
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -68,30 +30,15 @@ export default function AdminDashboard() {
 
   // Load students
   const loadStudents = async () => {
+    if (!user?.token) return;
     setLoading(true);
-    if (serverOnline && user?.token) {
-      try {
-        const data = await api.getStudents(user.token);
-        setStudents(data);
-      } catch (err) {
-        message.error('Failed to load students from backend. Falling back to local db.');
-        loadLocalStudents();
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      loadLocalStudents();
+    try {
+      const data = await api.getStudents(user.token);
+      setStudents(data);
+    } catch (err) {
+      message.error('Failed to load students from backend.');
+    } finally {
       setLoading(false);
-    }
-  };
-
-  const loadLocalStudents = () => {
-    const localDb = localStorage.getItem(MOCK_STUDENT_DB_KEY);
-    if (localDb) {
-      setStudents(JSON.parse(localDb));
-    } else {
-      localStorage.setItem(MOCK_STUDENT_DB_KEY, JSON.stringify(DEFAULT_STUDENTS));
-      setStudents(DEFAULT_STUDENTS);
     }
   };
 
@@ -202,7 +149,7 @@ export default function AdminDashboard() {
           {serverOnline ? (
             <Tag color="success" className="ml-2">Live API</Tag>
           ) : (
-            <Tag color="warning" className="ml-2">Mock Offline</Tag>
+            <Tag color="error" className="ml-2">Offline</Tag>
           )}
         </div>
 

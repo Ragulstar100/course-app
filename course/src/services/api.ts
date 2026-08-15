@@ -20,7 +20,7 @@ const getInitialShop = (): string => {
     const storedShop = localStorage.getItem('course_shop_domain');
     if (storedShop) return storedShop;
   }
-  return 'sample';
+  return 'devstore-k71vvnrv.myshopify.com';
 };
 
 const DEFAULT_SHOP = getInitialShop();
@@ -28,7 +28,7 @@ const DEFAULT_SHOP = getInitialShop();
 // Helper to get headers
 const getHeaders = (token?: string | null, customShop?: string | null) => {
   let shop = customShop || DEFAULT_SHOP;
-  if (!customShop && token && token !== 'mock_admin_token') {
+  if (!customShop && token) {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.shop) {
@@ -65,11 +65,11 @@ export const api = {
   },
 
   // Register student
-  async register(studentName: string, email: string, password: string, shop: string = DEFAULT_SHOP): Promise<StudentAuthResponse> {
+  async register(studentName: string, email: string, password: string): Promise<StudentAuthResponse> {
     const response = await fetch(`${API_BASE_URL}/student/register`, {
       method: 'POST',
-      headers: getHeaders(null, shop),
-      body: JSON.stringify({ studentName, email, password, shop }),
+      headers: getHeaders(null),
+      body: JSON.stringify({ studentName, email, password }),
     });
 
     const data = await response.json();
@@ -79,12 +79,27 @@ export const api = {
     return data.student;
   },
 
-  // Login student
-  async login(email: string, password: string, shop: string = DEFAULT_SHOP): Promise<StudentAuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/student/login`, {
+  // Login merchant (Admin)
+  async loginMerchant(username: string, password: string, shop: string = DEFAULT_SHOP): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/shopify/login`, {
       method: 'POST',
       headers: getHeaders(null, shop),
-      body: JSON.stringify({ email, password, shop }),
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.details || data.error || 'Merchant login failed');
+    }
+    return data;
+  },
+
+  // Login student
+  async login(email: string, password: string): Promise<StudentAuthResponse> {
+    const response = await fetch(`${API_BASE_URL}/student/login`, {
+      method: 'POST',
+      headers: getHeaders(null),
+      body: JSON.stringify({ email, password }),
     });
 
     const data = await response.json();

@@ -16,7 +16,7 @@ export default function Welcome() {
       const isOnline = result.payload as boolean;
       if (!isOnline) {
         message.error({
-          content: 'Server is offline. Running in Mock Offline Mode.',
+          content: 'Server is offline. Please start the backend server.',
           duration: 4,
           style: { marginTop: '20px' }
         });
@@ -46,7 +46,7 @@ export default function Welcome() {
           ) : serverOnline ? (
             <Badge status="success" text="Online (cource-api connected)" />
           ) : (
-            <Badge status="error" text="Offline (Mock Mode active)" />
+            <Badge status="error" text="Offline" />
           )}
         </Space>
       </div>

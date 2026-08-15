@@ -32,11 +32,11 @@ export const checkServerStatus = createAsyncThunk(
 export const registerUser = createAsyncThunk(
   'auth/register',
   async (
-    payload: { studentName: string; email: string; password: string; shop?: string },
+    payload: { studentName: string; email: string; password: string },
     { rejectWithValue }
   ) => {
     try {
-      const student = await api.register(payload.studentName, payload.email, payload.password, payload.shop);
+      const student = await api.register(payload.studentName, payload.email, payload.password);
       return student;
     } catch (err: any) {
       return rejectWithValue(err.message || 'Registration failed');
@@ -51,23 +51,26 @@ export const loginUser = createAsyncThunk(
     payload: { email: string; password: string; shop?: string },
     { rejectWithValue }
   ) => {
-    // Hardcoded Admin login check
-    if (payload.email === 'test' && payload.password === 'test') {
-      const adminUser: StudentAuthResponse = {
-        id: 'admin_id',
-        studentName: 'Admin Test',
-        email: 'test',
-        studentStatus: 'Active',
-        createdDate: new Date().toISOString(),
-        shop: payload.shop || 'sample',
-        token: 'mock_admin_token',
-        isAdmin: true,
-      };
-      return adminUser;
-    }
-
     try {
-      const student = await api.login(payload.email, payload.password, payload.shop);
+      // If it doesn't contain '@', treat it as a merchant username login
+      if (!payload.email.includes('@')) {
+        const merchantData = await api.loginMerchant(payload.email, payload.password, payload.shop);
+        
+        // Map merchant auth response to StudentAuthResponse model format
+        const adminUser: StudentAuthResponse = {
+          id: `merchant_${merchantData.shop}`,
+          studentName: merchantData.merchant.name || merchantData.merchant.shopOwner || merchantData.username || 'Admin',
+          email: merchantData.merchant.email || merchantData.username || 'merchant',
+          studentStatus: 'Active',
+          createdDate: new Date().toISOString(),
+          shop: merchantData.shop,
+          token: merchantData.token,
+          isAdmin: true,
+        };
+        return adminUser;
+      }
+
+      const student = await api.login(payload.email, payload.password);
       return student;
     } catch (err: any) {
       return rejectWithValue(err.message || 'Login failed');
@@ -115,6 +118,7 @@ const authSlice = createSlice({
       state.error = null;
       localStorage.removeItem('auth_user');
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('course_shop_domain');
     },
     clearError(state) {
       state.error = null;

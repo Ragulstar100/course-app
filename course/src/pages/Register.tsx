@@ -14,17 +14,33 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [shop] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlShop = params.get('shop');
-    if (urlShop) return urlShop;
-    const storedShop = localStorage.getItem('course_shop_domain');
-    return storedShop || 'sample';
-  });
-
   const handleSubmit = async () => {
-    if (!name || !email || !password) {
+    if (!name.trim() || !email.trim() || !password) {
       message.error('Please fill in all required fields.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      message.error('Please enter a valid email address.');
+      return;
+    }
+
+    // Enforce that Name cannot be an email address
+    if (emailRegex.test(name.trim()) || name.trim().includes('@')) {
+      message.error('Full Name cannot be an email address.');
+      return;
+    }
+
+    // Enforce Name length
+    if (name.trim().length < 2) {
+      message.error('Full Name must be at least 2 characters long.');
+      return;
+    }
+
+    // Enforce Password length
+    if (password.length < 6) {
+      message.error('Password must be at least 6 characters long.');
       return;
     }
 
@@ -36,8 +52,7 @@ export default function Register() {
     const resultAction = await dispatch(registerUser({ 
       studentName: name, 
       email: email.trim(), 
-      password,
-      shop: shop ? shop.trim() : undefined
+      password
     }));
 
     if (registerUser.rejected.match(resultAction)) {
@@ -45,19 +60,16 @@ export default function Register() {
       if (errMsg === 'EMAIL_ALREADY_EXISTS' || (errMsg && errMsg.includes('already registered'))) {
         message.warning('Email is already registered. Redirecting you to login page...');
         setTimeout(() => {
-          navigate('/login', { state: { email: email.trim(), shop: shop ? shop.trim() : undefined } });
+          navigate('/login', { state: { email: email.trim() } });
         }, 1500);
       } else {
         message.error(errMsg || 'Registration failed');
       }
     } else {
       message.success('Student registered successfully!');
-      if (resultAction.payload && (resultAction.payload as any).shop) {
-        localStorage.setItem('course_shop_domain', (resultAction.payload as any).shop);
-      }
       setTimeout(() => {
-        // Go to login page, passing the email, password, and shop so it can autofill
-        navigate('/login', { state: { email: email.trim(), password, shop: shop ? shop.trim() : undefined } });
+        // Go to login page, passing the email and password so it can autofill
+        navigate('/login', { state: { email: email.trim(), password } });
       }, 1500);
     }
   };
@@ -88,7 +100,6 @@ export default function Register() {
                 value={name}
                 onChange={(val) => setName(val)}
                 autoComplete="name"
-                placeholder="Ragul Son"
               />
               <TextField
                 label="Email Address"
@@ -96,7 +107,6 @@ export default function Register() {
                 onChange={(val) => setEmail(val)}
                 type="email"
                 autoComplete="email"
-                placeholder="ragulson200@gmail.com"
               />
               <TextField
                 label="Password"
@@ -104,7 +114,6 @@ export default function Register() {
                 onChange={(val) => setPassword(val)}
                 type="password"
                 autoComplete="new-password"
-                placeholder="••••••"
               />
               <TextField
                 label="Confirm Password"
@@ -112,7 +121,6 @@ export default function Register() {
                 onChange={(val) => setConfirmPassword(val)}
                 type="password"
                 autoComplete="new-password"
-                placeholder="••••••"
               />
               
               <div className="mt-4">
