@@ -2,44 +2,13 @@ import type { StudentAuthResponse, Student } from '../types/auth.types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://course-api-veiu.onrender.com';
 
-const getInitialShop = (): string => {
-  if (typeof window !== 'undefined') {
-    const params = new URLSearchParams(window.location.search);
-    const urlShop = params.get('shop');
-    if (urlShop) {
-      localStorage.setItem('course_shop_domain', urlShop);
-      return urlShop;
-    }
-    const storedUser = localStorage.getItem('auth_user');
-    if (storedUser) {
-      try {
-        const u = JSON.parse(storedUser);
-        if (u.shop) return u.shop;
-      } catch (e) {}
-    }
-    const storedShop = localStorage.getItem('course_shop_domain');
-    if (storedShop) return storedShop;
-  }
-  return 'devstore-k71vvnrv.myshopify.com';
-};
-
-const DEFAULT_SHOP = getInitialShop();
 
 // Helper to get headers
 const getHeaders = (token?: string | null, customShop?: string | null) => {
-  let shop = customShop || DEFAULT_SHOP;
-  if (!customShop && token) {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.shop) {
-        shop = payload.shop;
-      }
-    } catch (e) {}
-  }
+
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    'X-Shop-Domain': shop,
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -79,20 +48,7 @@ export const api = {
     return data.student;
   },
 
-  // Login merchant (Admin)
-  async loginMerchant(username: string, password: string, shop: string = DEFAULT_SHOP): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/shopify/login`, {
-      method: 'POST',
-      headers: getHeaders(null, shop),
-      body: JSON.stringify({ username, password }),
-    });
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.details || data.error || 'Merchant login failed');
-    }
-    return data;
-  },
 
   // Login student
   async login(email: string, password: string): Promise<StudentAuthResponse> {
@@ -151,47 +107,6 @@ export const api = {
     return await response.json();
   },
 
-  // CREATE course
-  async createCourse(courseData: { courseTitle: string; description: string; instructorName: string; category: string; duration: string; courseStatus: string }, token?: string | null): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/courses`, {
-      method: 'POST',
-      headers: getHeaders(token),
-      body: JSON.stringify(courseData),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.details || data.error || 'Failed to create course');
-    }
-    return data.course;
-  },
-
-  // UPDATE course
-  async updateCourse(id: string, courseData: { courseTitle: string; description: string; instructorName: string; category: string; duration: string; courseStatus: string }, token?: string | null): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
-      method: 'PUT',
-      headers: getHeaders(token),
-      body: JSON.stringify(courseData),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.details || data.error || 'Failed to update course');
-    }
-    return data.course;
-  },
-
-  // DELETE course
-  async deleteCourse(id: string, token?: string | null): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(token),
-    });
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.details || data.error || 'Failed to delete course');
-    }
-    return true;
-  },
-
   // Get student enrollments
   async getStudentEnrollments(token: string): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/student/student-enrollments`, {
@@ -205,11 +120,11 @@ export const api = {
   },
 
   // Enroll in a course (Purchase)
-  async enrollInCourse(token: string, courseId: string): Promise<any> {
+  async enrollInCourse(shop: string,token: string, courseId: string): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/student/student-enroll`, {
       method: 'POST',
       headers: getHeaders(token),
-      body: JSON.stringify({ courseId }),
+      body: JSON.stringify({ courseId,shop }),
     });
     const data = await response.json();
     if (!response.ok) {

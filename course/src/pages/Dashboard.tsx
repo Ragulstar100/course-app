@@ -59,14 +59,14 @@ export default function Dashboard() {
     loadData();
   }, [serverOnline, user]);
 
-  const handlePurchase = async (courseId: string) => {
+  const handlePurchase = async (courseId: string,shop:string) => {
     if (!user?.token) {
       message.error('You must be logged in to purchase a course.');
       return;
     }
 
     try {
-      await api.enrollInCourse(user.token, courseId);
+      await api.enrollInCourse(shop,user.token, courseId);
       message.success('Course purchased successfully!');
       loadData();
     } catch (err: any) {
@@ -355,7 +355,7 @@ export default function Dashboard() {
                               <span className="text-xs text-slate-400">Duration: <strong>{course.duration}</strong></span>
                               <span className="text-xs text-slate-400">Merchant: <strong>{course.shop}</strong></span>
                             </div>
-                            <Button variant="primary" onClick={() => handlePurchase(course.id)}>
+                            <Button variant="primary" onClick={() => handlePurchase(course.id,course.shop)}>
                               Purchase
                             </Button>
                           </div>

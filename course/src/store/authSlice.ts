@@ -63,7 +63,6 @@ export const loginUser = createAsyncThunk(
           email: merchantData.merchant.email || merchantData.username || 'merchant',
           studentStatus: 'Active',
           createdDate: new Date().toISOString(),
-          shop: merchantData.shop,
           token: merchantData.token,
           isAdmin: true,
         };

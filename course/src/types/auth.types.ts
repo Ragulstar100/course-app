@@ -5,7 +5,6 @@ export interface Student {
   studentStatus: "Active" | "Inactive";
   createdDate: string;
   shopifyCustomerId?: string | null;
-  shop: string;
   phone?: string;
   course?: string;
   bio?: string;
@@ -19,7 +18,6 @@ export interface StudentAuthResponse {
   studentStatus: "Active" | "Inactive";
   createdDate: string;
   shopifyCustomerId?: string | null;
-  shop: string;
   token: string;
   phone?: string;
   course?: string;
