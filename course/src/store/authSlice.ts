@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { AuthState, StudentAuthResponse } from '../types/auth.types';
+import type { AuthState } from '../types/auth.types';
 import { api } from '../services/api';
 
 // Retrieve initial auth state from localStorage
