@@ -4,7 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://course-api-veiu.on
 
 
 // Helper to get headers
-const getHeaders = (token?: string | null, customShop?: string | null) => {
+const getHeaders = (token?: string | null,) => {
 
   
   const headers: HeadersInit = {
@@ -52,6 +52,7 @@ export const api = {
 
   // Login student
   async login(email: string, password: string): Promise<StudentAuthResponse> {
+    
     const response = await fetch(`${API_BASE_URL}/student/login`, {
       method: 'POST',
       headers: getHeaders(null),

@@ -36,9 +36,7 @@ export default function Login() {
 
     if (loginUser.fulfilled.match(resultAction)) {
       message.success('Login successful!');
-      if (resultAction.payload.shop) {
-        localStorage.setItem('course_shop_domain', resultAction.payload.shop);
-      }
+  
       if (resultAction.payload.isAdmin) {
         navigate('/admin-dashboard');
       } else {

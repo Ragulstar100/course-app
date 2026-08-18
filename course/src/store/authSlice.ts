@@ -52,23 +52,6 @@ export const loginUser = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      // If it doesn't contain '@', treat it as a merchant username login
-      if (!payload.email.includes('@')) {
-        const merchantData = await api.loginMerchant(payload.email, payload.password, payload.shop);
-        
-        // Map merchant auth response to StudentAuthResponse model format
-        const adminUser: StudentAuthResponse = {
-          id: `merchant_${merchantData.shop}`,
-          studentName: merchantData.merchant.name || merchantData.merchant.shopOwner || merchantData.username || 'Admin',
-          email: merchantData.merchant.email || merchantData.username || 'merchant',
-          studentStatus: 'Active',
-          createdDate: new Date().toISOString(),
-          token: merchantData.token,
-          isAdmin: true,
-        };
-        return adminUser;
-      }
-
       const student = await api.login(payload.email, payload.password);
       return student;
     } catch (err: any) {
