@@ -52,7 +52,7 @@ export const api = {
 
   // Login student
   async login(email: string, password: string): Promise<StudentAuthResponse> {
-    
+
     const response = await fetch(`${API_BASE_URL}/student/login`, {
       method: 'POST',
       headers: getHeaders(null),
@@ -81,11 +81,11 @@ export const api = {
   },
 
   // Update student profile
-  async updateProfile(token: string, studentName: string, email: string, phone?: string, course?: string, bio?: string, shop: string = DEFAULT_SHOP): Promise<Student> {
+  async updateProfile(token: string, studentName: string, email: string, phone?: string, course?: string, bio?: string): Promise<Student> {
     const response = await fetch(`${API_BASE_URL}/student/student-profile`, {
       method: 'PUT',
-      headers: getHeaders(token, shop),
-      body: JSON.stringify({ studentName, email, phone, course, bio, shop }),
+      headers: getHeaders(token),
+      body: JSON.stringify({ studentName, email, phone, course, bio }),
     });
 
     const data = await response.json();
@@ -100,7 +100,7 @@ export const api = {
     const url = shop ? `${API_BASE_URL}/courses?shop=${shop}` : `${API_BASE_URL}/courses`;
     const response = await fetch(url, {
       method: 'GET',
-      headers: getHeaders(null, shop),
+      headers: getHeaders(null),
     });
     if (!response.ok) {
       throw new Error(`Failed to retrieve courses (Status: ${response.status})`);
